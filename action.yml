@@ -5,9 +5,6 @@ inputs:
     description: 'Version Spec of the version to use. Example: 3.4.7'
     required: true
     default: '4.0.5'
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
 runs:
   using: 'node12'
-  main: 'index.js'
+  main: 'dist/index.js'
