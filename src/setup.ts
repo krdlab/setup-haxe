@@ -15,6 +15,7 @@ export async function setup(version: string) {
     toolPath = await tc.cacheDir(await download(version), "haxe", version);
   }
   core.addPath(toolPath);
+  await setupHaxeStd(toolPath);
 }
 
 async function download(version: string) {
@@ -60,4 +61,8 @@ async function findToolRoot(extractPath: string) {
     }
   });
   return found ? toolRoot : null;
+}
+
+async function setupHaxeStd(toolRoot: string) {
+  await exec("haxelib", ["setup", `${toolRoot}/std`]);
 }
