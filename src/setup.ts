@@ -4,55 +4,44 @@
 // https://opensource.org/licenses/MIT
 
 import * as path from "path";
-import * as os from "os";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import { exec } from "@actions/exec";
+import { HaxeAsset, HaxeAssetFileExt } from "./asset";
 
-// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
-// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
-
-function getPlatform() {
-  const plat = os.platform();
-  switch (plat) {
-    case "linux":
-      return "linux";
-    case "win32":
-      return "win";
-    default:
-      throw new Error(`${plat} not supported`);
+export async function setup(version: string) {
+  let toolPath = tc.find("haxe", version);
+  if (!toolPath) {
+    toolPath = await tc.cacheDir(await download(version), "haxe", version);
   }
+  core.addPath(toolPath);
 }
 
-function getArch() {
-  const arch = os.arch();
-  switch (arch) {
-    case "x64":
-      return "64";
-    default:
-      throw new Error(`${arch} not supported`);
+async function download(version: string) {
+  const asset = new HaxeAsset(version);
+  const downloadPath = await tc.downloadTool(asset.downloadUrl);
+  const extractPath = await extract(
+    downloadPath,
+    asset.fileNameWithoutExt,
+    asset.fileExt
+  );
+
+  const toolRoot = await findToolRoot(extractPath);
+  if (!toolRoot) {
+    throw new Error(`tool directory not found: ${extractPath}`);
   }
+  return toolRoot;
 }
 
-function getTarget() {
-  return `${getPlatform()}${getArch()}`;
-}
-
-function getFileExt() {
-  switch (getPlatform()) {
-    case "win":
-      return ".zip";
+function extract(file: string, dest: string, ext: HaxeAssetFileExt) {
+  switch (ext) {
+    case ".tar.gz":
+      return tc.extractTar(file, dest);
+    case ".zip":
+      return tc.extractZip(file, dest);
     default:
-      return ".tar.gz";
+      throw Error(`unknown ext: ${ext}`);
   }
-}
-
-function getFileNameWithoutExt(version: string) {
-  return `haxe-${version}-${getTarget()}`;
-}
-
-function getDownloadUrl(version: string, fileName: string, fileExt: string) {
-  return `https://github.com/HaxeFoundation/haxe/releases/download/${version}/${fileName}${fileExt}`;
 }
 
 // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
@@ -71,22 +60,4 @@ async function findToolRoot(extractPath: string) {
     }
   });
   return found ? toolRoot : null;
-}
-
-export async function setup(version: string) {
-  let toolPath = tc.find("haxe", version);
-  if (!toolPath) {
-    const fileName = getFileNameWithoutExt(version);
-    const downloadPath = await tc.downloadTool(
-      getDownloadUrl(version, fileName, getFileExt())
-    );
-    const extractPath = await tc.extractTar(downloadPath, fileName);
-    const toolRoot = await findToolRoot(extractPath);
-    if (!toolRoot) {
-      throw new Error(`tool directory not found: ${extractPath}`);
-    }
-    toolPath = await tc.cacheDir(toolRoot, "haxe", version);
-  }
-
-  core.addPath(toolPath);
 }
