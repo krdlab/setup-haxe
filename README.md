@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
   steps:
     - run: |
-        apt-get update
-        apt-get install neko
+        sudo apt-get update
+        sudo apt-get install neko
     - uses: krdlab/setup-haxe@v1
       with:
         haxe-version: 3.4.7
