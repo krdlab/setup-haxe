@@ -15,4 +15,5 @@ jobs:
       - uses: ./
         with:
           haxe-version: 3.4.7
+      - run: haxe -version
       - run: haxelib install hxnodejs
