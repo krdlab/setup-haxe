@@ -12,7 +12,6 @@ async function main(): Promise<void> {
     const inputVersion = core.getInput("haxe-version");
     const version = semver.valid(semver.clean(inputVersion));
     if (version) {
-      // TODO: install neko
       await setup(version);
     }
   } catch (error) {

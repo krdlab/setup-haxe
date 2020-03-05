@@ -7,19 +7,30 @@ import * as path from "path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import { exec } from "@actions/exec";
-import { HaxeAsset, HaxeAssetFileExt } from "./asset";
+import { Asset, NekoAsset, HaxeAsset, AssetFileExt } from "./asset";
 
 export async function setup(version: string) {
-  let toolPath = tc.find("haxe", version);
-  if (!toolPath) {
-    toolPath = await tc.cacheDir(await download(version), "haxe", version);
-  }
-  core.addPath(toolPath);
-  await setupHaxeStd(toolPath);
+  const neko = new NekoAsset("2.3.0"); // ! FIXME: resolve a neko version from the version arg
+  const nekoPath = await _setup(neko);
+  core.addPath(nekoPath);
+  core.exportVariable("NEKO_PATH", nekoPath);
+  core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
+
+  const haxe = new HaxeAsset(version);
+  const haxePath = await _setup(haxe);
+  core.addPath(haxePath);
+  await setupHaxeStd(haxePath);
 }
 
-async function download(version: string) {
-  const asset = new HaxeAsset(version);
+async function _setup(asset: Asset) {
+  const toolPath = tc.find(asset.name, asset.version);
+  if (!!toolPath) {
+    return Promise.resolve(toolPath);
+  }
+  return await tc.cacheDir(await download(asset), asset.name, asset.version);
+}
+
+async function download(asset: Asset) {
   const downloadPath = await tc.downloadTool(asset.downloadUrl);
   const extractPath = await extract(
     downloadPath,
@@ -27,14 +38,15 @@ async function download(version: string) {
     asset.fileExt
   );
 
-  const toolRoot = await findToolRoot(extractPath);
+  const toolRoot = await findToolRoot(extractPath, asset.isDirectoryNested);
   if (!toolRoot) {
     throw new Error(`tool directory not found: ${extractPath}`);
   }
+  core.debug(`found toolRoot: ${toolRoot}`);
   return toolRoot;
 }
 
-function extract(file: string, dest: string, ext: HaxeAssetFileExt) {
+function extract(file: string, dest: string, ext: AssetFileExt) {
   switch (ext) {
     case ".tar.gz":
       return tc.extractTar(file, dest);
@@ -46,7 +58,11 @@ function extract(file: string, dest: string, ext: HaxeAssetFileExt) {
 }
 
 // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
-async function findToolRoot(extractPath: string) {
+async function findToolRoot(extractPath: string, nested: boolean) {
+  if (!nested) {
+    return extractPath;
+  }
+
   let found = false;
   let toolRoot = "";
   await exec("ls", ["-1", extractPath], {
