@@ -994,8 +994,11 @@ class NekoAsset extends AbstractAsset {
         const tag = `v${this.version.replace(/\./g, "-")}`;
         return super.makeDownloadUrl(`/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
+    get target() {
+        return `${this.env.platform}${this.env.arch}`;
+    }
     get fileNameWithoutExt() {
-        return `neko-${this.version}-${this.env.target}`;
+        return `neko-${this.version}-${this.target}`;
     }
     get isDirectoryNested() {
         return true;
@@ -1011,8 +1014,16 @@ class HaxeAsset extends AbstractAsset {
     get downloadUrl() {
         return super.makeDownloadUrl(`/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
+    get target() {
+        if (this.env.platform === "osx") {
+            return `${this.env.platform}`;
+        }
+        else {
+            return `${this.env.platform}${this.env.arch}`;
+        }
+    }
     get fileNameWithoutExt() {
-        return `haxe-${this.version}-${this.env.target}`;
+        return `haxe-${this.version}-${this.target}`;
     }
     get isDirectoryNested() {
         return true;
@@ -1027,6 +1038,8 @@ class Env {
                 return "linux";
             case "win32":
                 return "win";
+            case "darwin":
+                return "osx";
             default:
                 throw new Error(`${plat} not supported`);
         }
@@ -1040,10 +1053,8 @@ class Env {
                 throw new Error(`${arch} not supported`);
         }
     }
-    get target() {
-        return `${this.platform}${this.arch}`;
-    }
 }
+exports.Env = Env;
 
 
 /***/ }),
@@ -2540,13 +2551,19 @@ const core = __importStar(__webpack_require__(470));
 const tc = __importStar(__webpack_require__(533));
 const exec_1 = __webpack_require__(986);
 const asset_1 = __webpack_require__(27);
+const env = new asset_1.Env();
 function setup(version) {
     return __awaiter(this, void 0, void 0, function* () {
-        const neko = new asset_1.NekoAsset("2.3.0"); // ! FIXME: resolve a neko version from the version arg
-        const nekoPath = yield _setup(neko);
-        core.addPath(nekoPath);
-        core.exportVariable("NEKO_PATH", nekoPath);
-        core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
+        if (env.platform === "osx") {
+            yield exec_1.exec("brew", ["install", "neko"]);
+        }
+        else {
+            const neko = new asset_1.NekoAsset("2.3.0"); // ! FIXME: resolve a neko version from the version arg
+            const nekoPath = yield _setup(neko);
+            core.addPath(nekoPath);
+            core.exportVariable("NEKO_PATH", nekoPath);
+            core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
+        }
         const haxe = new asset_1.HaxeAsset(version);
         const haxePath = yield _setup(haxe);
         core.addPath(haxePath);

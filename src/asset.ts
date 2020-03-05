@@ -55,8 +55,12 @@ export class NekoAsset extends AbstractAsset {
     );
   }
 
+  get target() {
+    return `${this.env.platform}${this.env.arch}`;
+  }
+
   get fileNameWithoutExt() {
-    return `neko-${this.version}-${this.env.target}`;
+    return `neko-${this.version}-${this.target}`;
   }
 
   get isDirectoryNested() {
@@ -77,8 +81,16 @@ export class HaxeAsset extends AbstractAsset {
     );
   }
 
+  get target() {
+    if (this.env.platform === "osx") {
+      return `${this.env.platform}`;
+    } else {
+      return `${this.env.platform}${this.env.arch}`;
+    }
+  }
+
   get fileNameWithoutExt() {
-    return `haxe-${this.version}-${this.env.target}`;
+    return `haxe-${this.version}-${this.target}`;
   }
 
   get isDirectoryNested() {
@@ -86,7 +98,7 @@ export class HaxeAsset extends AbstractAsset {
   }
 }
 
-class Env {
+export class Env {
   get platform() {
     const plat = os.platform();
     switch (plat) {
@@ -94,6 +106,8 @@ class Env {
         return "linux";
       case "win32":
         return "win";
+      case "darwin":
+        return "osx";
       default:
         throw new Error(`${plat} not supported`);
     }
@@ -107,9 +121,5 @@ class Env {
       default:
         throw new Error(`${arch} not supported`);
     }
-  }
-
-  get target() {
-    return `${this.platform}${this.arch}`;
   }
 }
