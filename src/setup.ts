@@ -86,5 +86,5 @@ async function findToolRoot(extractPath: string, nested: boolean) {
 }
 
 async function setupHaxeStd(toolRoot: string) {
-  await exec("haxelib", ["setup", `${toolRoot}/std`]);
+  await exec("haxelib", ["setup", path.join(toolRoot, "std")]);
 }

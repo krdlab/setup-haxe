@@ -2626,7 +2626,7 @@ function findToolRoot(extractPath, nested) {
 }
 function setupHaxeStd(toolRoot) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exec_1.exec("haxelib", ["setup", `${toolRoot}/std`]);
+        yield exec_1.exec("haxelib", ["setup", path.join(toolRoot, "std")]);
     });
 }
 
