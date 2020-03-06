@@ -5,26 +5,33 @@
 
 import * as os from "os";
 
-// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
-// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
+export type AssetFileExt = ".zip" | ".tar.gz";
 
-export type HaxeAssetFileExt = ".zip" | ".tar.gz";
+export interface Asset {
+  readonly name: string;
+  readonly version: string;
+  readonly downloadUrl: string;
+  readonly fileNameWithoutExt: string;
+  readonly fileExt: AssetFileExt;
+  readonly isDirectoryNested: boolean;
+}
 
-export class HaxeAsset {
+abstract class AbstractAsset implements Asset {
   constructor(
-    private readonly version: string,
-    private readonly env = new Env()
+    readonly name: string,
+    readonly version: string,
+    protected readonly env: Env
   ) {}
 
-  get downloadUrl() {
-    return `https://github.com/HaxeFoundation/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`;
+  abstract get downloadUrl(): string;
+  abstract get fileNameWithoutExt(): string;
+  abstract get isDirectoryNested(): boolean;
+
+  makeDownloadUrl(path: string) {
+    return `https://github.com/HaxeFoundation${path}`;
   }
 
-  get fileNameWithoutExt() {
-    return `haxe-${this.version}-${this.env.haxeTarget}`;
-  }
-
-  get fileExt(): HaxeAssetFileExt {
+  get fileExt(): AssetFileExt {
     switch (this.env.platform) {
       case "win":
         return ".zip";
@@ -34,7 +41,64 @@ export class HaxeAsset {
   }
 }
 
-class Env {
+// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
+// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
+export class NekoAsset extends AbstractAsset {
+  constructor(version: string, env = new Env()) {
+    super("neko", version, env);
+  }
+
+  get downloadUrl() {
+    const tag = `v${this.version.replace(/\./g, "-")}`;
+    return super.makeDownloadUrl(
+      `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`
+    );
+  }
+
+  get target() {
+    return `${this.env.platform}${this.env.arch}`;
+  }
+
+  get fileNameWithoutExt() {
+    return `neko-${this.version}-${this.target}`;
+  }
+
+  get isDirectoryNested() {
+    return true;
+  }
+}
+
+// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
+// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
+export class HaxeAsset extends AbstractAsset {
+  constructor(version: string, env = new Env()) {
+    super("haxe", version, env);
+  }
+
+  get downloadUrl() {
+    return super.makeDownloadUrl(
+      `/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`
+    );
+  }
+
+  get target() {
+    if (this.env.platform === "osx") {
+      return `${this.env.platform}`;
+    } else {
+      return `${this.env.platform}${this.env.arch}`;
+    }
+  }
+
+  get fileNameWithoutExt() {
+    return `haxe-${this.version}-${this.target}`;
+  }
+
+  get isDirectoryNested() {
+    return true;
+  }
+}
+
+export class Env {
   get platform() {
     const plat = os.platform();
     switch (plat) {
@@ -42,6 +106,8 @@ class Env {
         return "linux";
       case "win32":
         return "win";
+      case "darwin":
+        return "osx";
       default:
         throw new Error(`${plat} not supported`);
     }
@@ -55,9 +121,5 @@ class Env {
       default:
         throw new Error(`${arch} not supported`);
     }
-  }
-
-  get haxeTarget() {
-    return `${this.platform}${this.arch}`;
   }
 }
