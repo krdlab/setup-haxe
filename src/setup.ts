@@ -25,7 +25,7 @@ export async function setup(version: string) {
   const haxe = new HaxeAsset(version);
   const haxePath = await _setup(haxe);
   core.addPath(haxePath);
-  core.exportVariable("HAXE_STD_PATH", path.join(haxePath, "std"));
+  await setupHaxeStd(haxePath);
 }
 
 async function _setup(asset: Asset) {
@@ -83,4 +83,10 @@ async function findToolRoot(extractPath: string, nested: boolean) {
     }
   });
   return found ? toolRoot : null;
+}
+
+async function setupHaxeStd(toolRoot: string) {
+  const stdPath = path.join(toolRoot, "std");
+  await exec("haxelib", ["setup", stdPath]);
+  core.exportVariable("HAXE_STD_PATH", stdPath);
 }
