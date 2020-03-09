@@ -2567,7 +2567,7 @@ function setup(version) {
         const haxe = new asset_1.HaxeAsset(version);
         const haxePath = yield _setup(haxe);
         core.addPath(haxePath);
-        yield setupHaxeStd(haxePath);
+        core.exportVariable("HAXE_STD_PATH", path.join(haxePath, "std"));
     });
 }
 exports.setup = setup;
@@ -2622,11 +2622,6 @@ function findToolRoot(extractPath, nested) {
             }
         });
         return found ? toolRoot : null;
-    });
-}
-function setupHaxeStd(toolRoot) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec_1.exec("haxelib", ["setup", path.join(toolRoot, "std")]);
     });
 }
 
