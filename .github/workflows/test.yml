@@ -16,3 +16,6 @@ jobs:
           haxe-version: 3.4.7
       - run: haxe -version
       - run: haxelib install hxnodejs
+
+      - name: Compile test code
+        run: haxe -cp test-workflow -main Main -js test-workflow.js
