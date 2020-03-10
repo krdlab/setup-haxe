@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: krdlab/setup-haxe@v1.1.1
+      - uses: krdlab/setup-haxe@v1
         with:
           haxe-version: 3.4.7
       - run: |
