@@ -1,6 +1,10 @@
 # setup-haxe
 
+This action sets up a Haxe environment for use in your workflows.
+
 ## Usage
+
+See [action.yml](action.yml) and [.github/workflows/](.github/workflows/).
 
 ```yaml
 jobs:
@@ -9,7 +13,7 @@ jobs:
     steps:
       - uses: krdlab/setup-haxe@v1
         with:
-          haxe-version: 3.4.7
+          haxe-version: 4.0.5
       - run: |
           haxe -version
           haxelib install hxnodejs
