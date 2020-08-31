@@ -41,6 +41,25 @@ abstract class AbstractAsset implements Asset {
   }
 }
 
+export class HashLinkAsset extends AbstractAsset {
+  constructor(version: string, env = new Env()) {
+    super("hl", version, env);
+  }
+
+  get downloadUrl(): string {
+    // * NOTE: https://github.com/HaxeFoundation/hashlink/releases/download/1.11/hl-1.11.0-win.zip
+    return this.makeDownloadUrl(`/hashlink/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`);
+  }
+
+  get fileNameWithoutExt(): string {
+    return `hl-${this.version}-win`;
+  }
+
+  get isDirectoryNested(): boolean {
+    return false;
+  }
+}
+
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
 export class NekoAsset extends AbstractAsset {

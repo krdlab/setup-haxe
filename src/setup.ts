@@ -7,7 +7,7 @@ import * as path from "path";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import { exec } from "@actions/exec";
-import { Asset, NekoAsset, HaxeAsset, AssetFileExt, Env } from "./asset";
+import { Asset, NekoAsset, HaxeAsset, AssetFileExt, Env, HashLinkAsset } from "./asset";
 
 const env = new Env();
 
@@ -26,6 +26,20 @@ export async function setup(version: string) {
   const haxePath = await _setup(haxe);
   core.addPath(haxePath);
   await setupHaxeLib(haxePath);
+
+  await setupHashLink();
+}
+
+async function setupHashLink(/* TODO: version */) {
+  if (env.platform === "win") {
+    const hl = new HashLinkAsset("1.11");
+    const hlPath = await _setup(hl);
+    core.addPath(hlPath);
+  } else if (env.platform === "osx") {
+    await exec("brew", ["install", "hashlink"]);
+  } else {
+    // TODO: linux
+  }
 }
 
 async function _setup(asset: Asset) {
