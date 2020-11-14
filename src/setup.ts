@@ -12,19 +12,20 @@ import { Asset, NekoAsset, HaxeAsset, AssetFileExt, Env } from "./asset";
 const env = new Env();
 
 export async function setup(version: string) {
-  if (env.platform === "osx") {
-    await exec("brew", ["install", "neko"]);
-  } else {
-    const neko = new NekoAsset("2.3.0"); // ! FIXME: resolve a neko version from the version arg
-    const nekoPath = await _setup(neko);
-    core.addPath(nekoPath);
-    core.exportVariable("NEKO_PATH", nekoPath);
-    core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
-  }
+  const neko = new NekoAsset("2.3.0"); // haxelib requires Neko
+  const nekoPath = await _setup(neko);
+  core.addPath(nekoPath);
+  core.exportVariable("NEKOPATH", nekoPath);
+  core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
 
   const haxe = new HaxeAsset(version);
   const haxePath = await _setup(haxe);
   core.addPath(haxePath);
+
+  if (env.platform === "osx") {
+    // ref: https://github.com/asdf-community/asdf-haxe/pull/7
+    await exec('ln', ['-sfv', path.join(nekoPath, 'libneko.2.dylib'), path.join(haxePath, 'libneko.2.dylib')]);
+  }
   await setupHaxeLib(haxePath);
 }
 

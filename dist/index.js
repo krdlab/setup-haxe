@@ -985,6 +985,7 @@ class AbstractAsset {
     }
 }
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
+// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-osx64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
 class NekoAsset extends AbstractAsset {
     constructor(version, env = new Env()) {
@@ -2616,19 +2617,18 @@ const asset_1 = __webpack_require__(27);
 const env = new asset_1.Env();
 function setup(version) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (env.platform === "osx") {
-            yield exec_1.exec("brew", ["install", "neko"]);
-        }
-        else {
-            const neko = new asset_1.NekoAsset("2.3.0"); // ! FIXME: resolve a neko version from the version arg
-            const nekoPath = yield _setup(neko);
-            core.addPath(nekoPath);
-            core.exportVariable("NEKO_PATH", nekoPath);
-            core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
-        }
+        const neko = new asset_1.NekoAsset("2.3.0"); // haxelib requires Neko
+        const nekoPath = yield _setup(neko);
+        core.addPath(nekoPath);
+        core.exportVariable("NEKOPATH", nekoPath);
+        core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
         const haxe = new asset_1.HaxeAsset(version);
         const haxePath = yield _setup(haxe);
         core.addPath(haxePath);
+        if (env.platform === "osx") {
+            // ref: https://github.com/asdf-community/asdf-haxe/pull/7
+            yield exec_1.exec('ln', ['-sfv', path.join(nekoPath, 'libneko.2.dylib'), path.join(haxePath, 'libneko.2.dylib')]);
+        }
         yield setupHaxeLib(haxePath);
     });
 }
