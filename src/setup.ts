@@ -13,23 +13,24 @@ const env = new Env();
 
 export async function setup(version: string) {
   const neko = new NekoAsset("2.3.0"); // haxelib requires Neko
-  const nekoPath = await _setup(neko);
+  const nekoPath = await setupAsset(neko);
   core.addPath(nekoPath);
   core.exportVariable("NEKOPATH", nekoPath);
   core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
 
   const haxe = new HaxeAsset(version);
-  const haxePath = await _setup(haxe);
+  const haxePath = await setupAsset(haxe);
   core.addPath(haxePath);
+  core.exportVariable("HAXE_STD_PATH", path.join(haxePath, "std"));
 
   if (env.platform === "osx") {
     // ref: https://github.com/asdf-community/asdf-haxe/pull/7
     await exec('ln', ['-sfv', path.join(nekoPath, 'libneko.2.dylib'), path.join(haxePath, 'libneko.2.dylib')]);
   }
-  await setupHaxeLib(haxePath);
+  await exec("haxelib", ["setup", path.join(haxePath, "lib")]);
 }
 
-async function _setup(asset: Asset) {
+async function setupAsset(asset: Asset) {
   const toolPath = tc.find(asset.name, asset.version);
   if (!!toolPath) {
     return Promise.resolve(toolPath);
@@ -84,9 +85,4 @@ async function findToolRoot(extractPath: string, nested: boolean) {
     }
   });
   return found ? toolRoot : null;
-}
-
-async function setupHaxeLib(toolRoot: string) {
-  await exec("haxelib", ["setup", path.join(toolRoot, "lib")]);
-  core.exportVariable("HAXE_STD_PATH", path.join(toolRoot, "std"));
 }

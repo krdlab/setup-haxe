@@ -2618,22 +2618,23 @@ const env = new asset_1.Env();
 function setup(version) {
     return __awaiter(this, void 0, void 0, function* () {
         const neko = new asset_1.NekoAsset("2.3.0"); // haxelib requires Neko
-        const nekoPath = yield _setup(neko);
+        const nekoPath = yield setupAsset(neko);
         core.addPath(nekoPath);
         core.exportVariable("NEKOPATH", nekoPath);
         core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
         const haxe = new asset_1.HaxeAsset(version);
-        const haxePath = yield _setup(haxe);
+        const haxePath = yield setupAsset(haxe);
         core.addPath(haxePath);
+        core.exportVariable("HAXE_STD_PATH", path.join(haxePath, "std"));
         if (env.platform === "osx") {
             // ref: https://github.com/asdf-community/asdf-haxe/pull/7
             yield exec_1.exec('ln', ['-sfv', path.join(nekoPath, 'libneko.2.dylib'), path.join(haxePath, 'libneko.2.dylib')]);
         }
-        yield setupHaxeLib(haxePath);
+        yield exec_1.exec("haxelib", ["setup", path.join(haxePath, "lib")]);
     });
 }
 exports.setup = setup;
-function _setup(asset) {
+function setupAsset(asset) {
     return __awaiter(this, void 0, void 0, function* () {
         const toolPath = tc.find(asset.name, asset.version);
         if (!!toolPath) {
@@ -2684,12 +2685,6 @@ function findToolRoot(extractPath, nested) {
             }
         });
         return found ? toolRoot : null;
-    });
-}
-function setupHaxeLib(toolRoot) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec_1.exec("haxelib", ["setup", path.join(toolRoot, "lib")]);
-        core.exportVariable("HAXE_STD_PATH", path.join(toolRoot, "std"));
     });
 }
 
