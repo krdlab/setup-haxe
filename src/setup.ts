@@ -30,5 +30,12 @@ export async function setup(version: string) {
       path.join(haxePath, 'libneko.2.dylib'),
     ]);
   }
+  if (env.platform === 'win') {
+    await Promise.all(
+      ['gcmt-dll.dll', 'neko.dll'].map((dll) =>
+        exec('cp', [path.join(nekoPath, dll), path.join(haxePath, dll)])
+      )
+    );
+  }
   await exec('haxelib', ['setup', path.join(haxePath, 'lib')]);
 }

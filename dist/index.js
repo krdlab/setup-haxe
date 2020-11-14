@@ -2699,6 +2699,9 @@ function setup(version) {
                 path.join(haxePath, 'libneko.2.dylib'),
             ]);
         }
+        if (env.platform === 'win') {
+            yield Promise.all(['gcmt-dll.dll', 'neko.dll'].map((dll) => exec_1.exec('cp', [path.join(nekoPath, dll), path.join(haxePath, dll)])));
+        }
         yield exec_1.exec('haxelib', ['setup', path.join(haxePath, 'lib')]);
     });
 }
