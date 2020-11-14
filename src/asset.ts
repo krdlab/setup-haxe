@@ -3,20 +3,16 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-import * as path from "path";
-import * as os from "os";
-import * as tc from "@actions/tool-cache";
-import * as core from "@actions/core";
-import { exec } from "@actions/exec";
+import * as path from 'path';
+import * as os from 'os';
+import * as tc from '@actions/tool-cache';
+import * as core from '@actions/core';
+import { exec } from '@actions/exec';
 
-export type AssetFileExt = ".zip" | ".tar.gz";
+export type AssetFileExt = '.zip' | '.tar.gz';
 
 abstract class Asset {
-  constructor(
-    readonly name: string,
-    readonly version: string,
-    protected readonly env: Env
-  ) {}
+  constructor(readonly name: string, readonly version: string, protected readonly env: Env) {}
 
   async setup() {
     const toolPath = tc.find(this.name, this.version);
@@ -28,11 +24,7 @@ abstract class Asset {
 
   private async download() {
     const downloadPath = await tc.downloadTool(this.downloadUrl);
-    const extractPath = await this.extract(
-      downloadPath,
-      this.fileNameWithoutExt,
-      this.fileExt
-    );
+    const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
 
     const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
     if (!toolRoot) {
@@ -44,9 +36,9 @@ abstract class Asset {
 
   private extract(file: string, dest: string, ext: AssetFileExt) {
     switch (ext) {
-      case ".tar.gz":
+      case '.tar.gz':
         return tc.extractTar(file, dest);
-      case ".zip":
+      case '.zip':
         return tc.extractZip(file, dest);
       default:
         throw Error(`unknown ext: ${ext}`);
@@ -60,17 +52,17 @@ abstract class Asset {
     }
 
     let found = false;
-    let toolRoot = "";
-    await exec("ls", ["-1", extractPath], {
+    let toolRoot = '';
+    await exec('ls', ['-1', extractPath], {
       listeners: {
-        stdout: data => {
+        stdout: (data) => {
           const entry = data.toString().trim();
           if (entry.length > 0) {
             toolRoot = path.join(extractPath, entry);
             found = true;
           }
-        }
-      }
+        },
+      },
     });
     return found ? toolRoot : null;
   }
@@ -85,10 +77,10 @@ abstract class Asset {
 
   protected get fileExt(): AssetFileExt {
     switch (this.env.platform) {
-      case "win":
-        return ".zip";
+      case 'win':
+        return '.zip';
       default:
-        return ".tar.gz";
+        return '.tar.gz';
     }
   }
 }
@@ -98,11 +90,11 @@ abstract class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
 export class NekoAsset extends Asset {
   constructor(version: string, env = new Env()) {
-    super("neko", version, env);
+    super('neko', version, env);
   }
 
   get downloadUrl() {
-    const tag = `v${this.version.replace(/\./g, "-")}`;
+    const tag = `v${this.version.replace(/\./g, '-')}`;
     return super.makeDownloadUrl(
       `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`
     );
@@ -125,7 +117,7 @@ export class NekoAsset extends Asset {
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
 export class HaxeAsset extends Asset {
   constructor(version: string, env = new Env()) {
-    super("haxe", version, env);
+    super('haxe', version, env);
   }
 
   get downloadUrl() {
@@ -135,7 +127,7 @@ export class HaxeAsset extends Asset {
   }
 
   get target() {
-    if (this.env.platform === "osx") {
+    if (this.env.platform === 'osx') {
       return `${this.env.platform}`;
     } else {
       return `${this.env.platform}${this.env.arch}`;
@@ -155,12 +147,12 @@ export class Env {
   get platform() {
     const plat = os.platform();
     switch (plat) {
-      case "linux":
-        return "linux";
-      case "win32":
-        return "win";
-      case "darwin":
-        return "osx";
+      case 'linux':
+        return 'linux';
+      case 'win32':
+        return 'win';
+      case 'darwin':
+        return 'osx';
       default:
         throw new Error(`${plat} not supported`);
     }
@@ -169,8 +161,8 @@ export class Env {
   get arch() {
     const arch = os.arch();
     switch (arch) {
-      case "x64":
-        return "64";
+      case 'x64':
+        return '64';
       default:
         throw new Error(`${arch} not supported`);
     }

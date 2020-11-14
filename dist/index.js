@@ -1008,9 +1008,9 @@ class Asset {
     }
     extract(file, dest, ext) {
         switch (ext) {
-            case ".tar.gz":
+            case '.tar.gz':
                 return tc.extractTar(file, dest);
-            case ".zip":
+            case '.zip':
                 return tc.extractZip(file, dest);
             default:
                 throw Error(`unknown ext: ${ext}`);
@@ -1023,17 +1023,17 @@ class Asset {
                 return extractPath;
             }
             let found = false;
-            let toolRoot = "";
-            yield exec_1.exec("ls", ["-1", extractPath], {
+            let toolRoot = '';
+            yield exec_1.exec('ls', ['-1', extractPath], {
                 listeners: {
-                    stdout: data => {
+                    stdout: (data) => {
                         const entry = data.toString().trim();
                         if (entry.length > 0) {
                             toolRoot = path.join(extractPath, entry);
                             found = true;
                         }
-                    }
-                }
+                    },
+                },
             });
             return found ? toolRoot : null;
         });
@@ -1043,10 +1043,10 @@ class Asset {
     }
     get fileExt() {
         switch (this.env.platform) {
-            case "win":
-                return ".zip";
+            case 'win':
+                return '.zip';
             default:
-                return ".tar.gz";
+                return '.tar.gz';
         }
     }
 }
@@ -1055,10 +1055,10 @@ class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
 class NekoAsset extends Asset {
     constructor(version, env = new Env()) {
-        super("neko", version, env);
+        super('neko', version, env);
     }
     get downloadUrl() {
-        const tag = `v${this.version.replace(/\./g, "-")}`;
+        const tag = `v${this.version.replace(/\./g, '-')}`;
         return super.makeDownloadUrl(`/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
@@ -1076,13 +1076,13 @@ exports.NekoAsset = NekoAsset;
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
 class HaxeAsset extends Asset {
     constructor(version, env = new Env()) {
-        super("haxe", version, env);
+        super('haxe', version, env);
     }
     get downloadUrl() {
         return super.makeDownloadUrl(`/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
-        if (this.env.platform === "osx") {
+        if (this.env.platform === 'osx') {
             return `${this.env.platform}`;
         }
         else {
@@ -1101,12 +1101,12 @@ class Env {
     get platform() {
         const plat = os.platform();
         switch (plat) {
-            case "linux":
-                return "linux";
-            case "win32":
-                return "win";
-            case "darwin":
-                return "osx";
+            case 'linux':
+                return 'linux';
+            case 'win32':
+                return 'win';
+            case 'darwin':
+                return 'osx';
             default:
                 throw new Error(`${plat} not supported`);
         }
@@ -1114,8 +1114,8 @@ class Env {
     get arch() {
         const arch = os.arch();
         switch (arch) {
-            case "x64":
-                return "64";
+            case 'x64':
+                return '64';
             default:
                 throw new Error(`${arch} not supported`);
         }
@@ -2527,7 +2527,7 @@ const setup_1 = __webpack_require__(429);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const inputVersion = core.getInput("haxe-version");
+            const inputVersion = core.getInput('haxe-version');
             const version = semver.valid(semver.clean(inputVersion));
             if (version) {
                 yield setup_1.setup(version);
@@ -2682,20 +2682,24 @@ const asset_1 = __webpack_require__(27);
 const env = new asset_1.Env();
 function setup(version) {
     return __awaiter(this, void 0, void 0, function* () {
-        const neko = new asset_1.NekoAsset("2.3.0"); // haxelib requires Neko
+        const neko = new asset_1.NekoAsset('2.3.0'); // haxelib requires Neko
         const nekoPath = yield neko.setup();
         core.addPath(nekoPath);
-        core.exportVariable("NEKOPATH", nekoPath);
-        core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
+        core.exportVariable('NEKOPATH', nekoPath);
+        core.exportVariable('LD_LIBRARY_PATH', `${nekoPath}:$LD_LIBRARY_PATH`);
         const haxe = new asset_1.HaxeAsset(version);
         const haxePath = yield haxe.setup();
         core.addPath(haxePath);
-        core.exportVariable("HAXE_STD_PATH", path.join(haxePath, "std"));
-        if (env.platform === "osx") {
+        core.exportVariable('HAXE_STD_PATH', path.join(haxePath, 'std'));
+        if (env.platform === 'osx') {
             // ref: https://github.com/asdf-community/asdf-haxe/pull/7
-            yield exec_1.exec('ln', ['-sfv', path.join(nekoPath, 'libneko.2.dylib'), path.join(haxePath, 'libneko.2.dylib')]);
+            yield exec_1.exec('ln', [
+                '-sfv',
+                path.join(nekoPath, 'libneko.2.dylib'),
+                path.join(haxePath, 'libneko.2.dylib'),
+            ]);
         }
-        yield exec_1.exec("haxelib", ["setup", path.join(haxePath, "lib")]);
+        yield exec_1.exec('haxelib', ['setup', path.join(haxePath, 'lib')]);
     });
 }
 exports.setup = setup;
