@@ -957,6 +957,15 @@ module.exports = compareBuild
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
@@ -965,12 +974,69 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const path = __importStar(__webpack_require__(622));
 const os = __importStar(__webpack_require__(87));
+const tc = __importStar(__webpack_require__(533));
+const core = __importStar(__webpack_require__(470));
+const exec_1 = __webpack_require__(986);
 class AbstractAsset {
     constructor(name, version, env) {
         this.name = name;
         this.version = version;
         this.env = env;
+    }
+    setup() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const toolPath = tc.find(this.name, this.version);
+            if (!!toolPath) {
+                return Promise.resolve(toolPath);
+            }
+            return yield tc.cacheDir(yield this.download(), this.name, this.version);
+        });
+    }
+    download() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const downloadPath = yield tc.downloadTool(this.downloadUrl);
+            const extractPath = yield this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
+            const toolRoot = yield this.findToolRoot(extractPath, this.isDirectoryNested);
+            if (!toolRoot) {
+                throw new Error(`tool directory not found: ${extractPath}`);
+            }
+            core.debug(`found toolRoot: ${toolRoot}`);
+            return toolRoot;
+        });
+    }
+    extract(file, dest, ext) {
+        switch (ext) {
+            case ".tar.gz":
+                return tc.extractTar(file, dest);
+            case ".zip":
+                return tc.extractZip(file, dest);
+            default:
+                throw Error(`unknown ext: ${ext}`);
+        }
+    }
+    // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
+    findToolRoot(extractPath, nested) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!nested) {
+                return extractPath;
+            }
+            let found = false;
+            let toolRoot = "";
+            yield exec_1.exec("ls", ["-1", extractPath], {
+                listeners: {
+                    stdout: data => {
+                        const entry = data.toString().trim();
+                        if (entry.length > 0) {
+                            toolRoot = path.join(extractPath, entry);
+                            found = true;
+                        }
+                    }
+                }
+            });
+            return found ? toolRoot : null;
+        });
     }
     makeDownloadUrl(path) {
         return `https://github.com/HaxeFoundation${path}`;
@@ -2611,19 +2677,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
 const core = __importStar(__webpack_require__(470));
-const tc = __importStar(__webpack_require__(533));
 const exec_1 = __webpack_require__(986);
 const asset_1 = __webpack_require__(27);
 const env = new asset_1.Env();
 function setup(version) {
     return __awaiter(this, void 0, void 0, function* () {
         const neko = new asset_1.NekoAsset("2.3.0"); // haxelib requires Neko
-        const nekoPath = yield setupAsset(neko);
+        const nekoPath = yield neko.setup();
         core.addPath(nekoPath);
         core.exportVariable("NEKOPATH", nekoPath);
         core.exportVariable("LD_LIBRARY_PATH", `${nekoPath}:$LD_LIBRARY_PATH`);
         const haxe = new asset_1.HaxeAsset(version);
-        const haxePath = yield setupAsset(haxe);
+        const haxePath = yield haxe.setup();
         core.addPath(haxePath);
         core.exportVariable("HAXE_STD_PATH", path.join(haxePath, "std"));
         if (env.platform === "osx") {
@@ -2634,59 +2699,6 @@ function setup(version) {
     });
 }
 exports.setup = setup;
-function setupAsset(asset) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const toolPath = tc.find(asset.name, asset.version);
-        if (!!toolPath) {
-            return Promise.resolve(toolPath);
-        }
-        return yield tc.cacheDir(yield download(asset), asset.name, asset.version);
-    });
-}
-function download(asset) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const downloadPath = yield tc.downloadTool(asset.downloadUrl);
-        const extractPath = yield extract(downloadPath, asset.fileNameWithoutExt, asset.fileExt);
-        const toolRoot = yield findToolRoot(extractPath, asset.isDirectoryNested);
-        if (!toolRoot) {
-            throw new Error(`tool directory not found: ${extractPath}`);
-        }
-        core.debug(`found toolRoot: ${toolRoot}`);
-        return toolRoot;
-    });
-}
-function extract(file, dest, ext) {
-    switch (ext) {
-        case ".tar.gz":
-            return tc.extractTar(file, dest);
-        case ".zip":
-            return tc.extractZip(file, dest);
-        default:
-            throw Error(`unknown ext: ${ext}`);
-    }
-}
-// * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
-function findToolRoot(extractPath, nested) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!nested) {
-            return extractPath;
-        }
-        let found = false;
-        let toolRoot = "";
-        yield exec_1.exec("ls", ["-1", extractPath], {
-            listeners: {
-                stdout: data => {
-                    const entry = data.toString().trim();
-                    if (entry.length > 0) {
-                        toolRoot = path.join(extractPath, entry);
-                        found = true;
-                    }
-                }
-            }
-        });
-        return found ? toolRoot : null;
-    });
-}
 
 
 /***/ }),

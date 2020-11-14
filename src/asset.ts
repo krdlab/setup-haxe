@@ -3,7 +3,11 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+import * as path from "path";
 import * as os from "os";
+import * as tc from "@actions/tool-cache";
+import * as core from "@actions/core";
+import { exec } from "@actions/exec";
 
 export type AssetFileExt = ".zip" | ".tar.gz";
 
@@ -14,6 +18,8 @@ export interface Asset {
   readonly fileNameWithoutExt: string;
   readonly fileExt: AssetFileExt;
   readonly isDirectoryNested: boolean;
+
+  setup(): Promise<string>;
 }
 
 abstract class AbstractAsset implements Asset {
@@ -22,6 +28,63 @@ abstract class AbstractAsset implements Asset {
     readonly version: string,
     protected readonly env: Env
   ) {}
+
+  async setup() {
+    const toolPath = tc.find(this.name, this.version);
+    if (!!toolPath) {
+      return Promise.resolve(toolPath);
+    }
+    return await tc.cacheDir(await this.download(), this.name, this.version);
+  }
+
+  async download() {
+    const downloadPath = await tc.downloadTool(this.downloadUrl);
+    const extractPath = await this.extract(
+      downloadPath,
+      this.fileNameWithoutExt,
+      this.fileExt
+    );
+
+    const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
+    if (!toolRoot) {
+      throw new Error(`tool directory not found: ${extractPath}`);
+    }
+    core.debug(`found toolRoot: ${toolRoot}`);
+    return toolRoot;
+  }
+
+  extract(file: string, dest: string, ext: AssetFileExt) {
+    switch (ext) {
+      case ".tar.gz":
+        return tc.extractTar(file, dest);
+      case ".zip":
+        return tc.extractZip(file, dest);
+      default:
+        throw Error(`unknown ext: ${ext}`);
+    }
+  }
+
+  // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
+  async findToolRoot(extractPath: string, nested: boolean) {
+    if (!nested) {
+      return extractPath;
+    }
+
+    let found = false;
+    let toolRoot = "";
+    await exec("ls", ["-1", extractPath], {
+      listeners: {
+        stdout: data => {
+          const entry = data.toString().trim();
+          if (entry.length > 0) {
+            toolRoot = path.join(extractPath, entry);
+            found = true;
+          }
+        }
+      }
+    });
+    return found ? toolRoot : null;
+  }
 
   abstract get downloadUrl(): string;
   abstract get fileNameWithoutExt(): string;
