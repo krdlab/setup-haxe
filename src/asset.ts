@@ -3,53 +3,98 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-import * as os from "os";
+import * as path from 'path';
+import * as os from 'os';
+import * as tc from '@actions/tool-cache';
+import * as core from '@actions/core';
+import { exec } from '@actions/exec';
 
-export type AssetFileExt = ".zip" | ".tar.gz";
+export type AssetFileExt = '.zip' | '.tar.gz';
 
-export interface Asset {
-  readonly name: string;
-  readonly version: string;
-  readonly downloadUrl: string;
-  readonly fileNameWithoutExt: string;
-  readonly fileExt: AssetFileExt;
-  readonly isDirectoryNested: boolean;
-}
+abstract class Asset {
+  constructor(readonly name: string, readonly version: string, protected readonly env: Env) {}
 
-abstract class AbstractAsset implements Asset {
-  constructor(
-    readonly name: string,
-    readonly version: string,
-    protected readonly env: Env
-  ) {}
+  async setup() {
+    const toolPath = tc.find(this.name, this.version);
+    if (!!toolPath) {
+      return Promise.resolve(toolPath);
+    }
+    return await tc.cacheDir(await this.download(), this.name, this.version);
+  }
 
-  abstract get downloadUrl(): string;
-  abstract get fileNameWithoutExt(): string;
-  abstract get isDirectoryNested(): boolean;
+  private async download() {
+    const downloadPath = await tc.downloadTool(this.downloadUrl);
+    const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
 
-  makeDownloadUrl(path: string) {
+    const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
+    if (!toolRoot) {
+      throw new Error(`tool directory not found: ${extractPath}`);
+    }
+    core.debug(`found toolRoot: ${toolRoot}`);
+    return toolRoot;
+  }
+
+  private extract(file: string, dest: string, ext: AssetFileExt) {
+    switch (ext) {
+      case '.tar.gz':
+        return tc.extractTar(file, dest);
+      case '.zip':
+        return tc.extractZip(file, dest);
+      default:
+        throw Error(`unknown ext: ${ext}`);
+    }
+  }
+
+  // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
+  private async findToolRoot(extractPath: string, nested: boolean) {
+    if (!nested) {
+      return extractPath;
+    }
+
+    let found = false;
+    let toolRoot = '';
+    await exec('ls', ['-1', extractPath], {
+      listeners: {
+        stdout: (data) => {
+          const entry = data.toString().trim();
+          if (entry.length > 0) {
+            toolRoot = path.join(extractPath, entry);
+            found = true;
+          }
+        },
+      },
+    });
+    return found ? toolRoot : null;
+  }
+
+  protected abstract get downloadUrl(): string;
+  protected abstract get fileNameWithoutExt(): string;
+  protected abstract get isDirectoryNested(): boolean;
+
+  protected makeDownloadUrl(path: string) {
     return `https://github.com/HaxeFoundation${path}`;
   }
 
-  get fileExt(): AssetFileExt {
+  protected get fileExt(): AssetFileExt {
     switch (this.env.platform) {
-      case "win":
-        return ".zip";
+      case 'win':
+        return '.zip';
       default:
-        return ".tar.gz";
+        return '.tar.gz';
     }
   }
 }
 
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
+// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-osx64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
-export class NekoAsset extends AbstractAsset {
+export class NekoAsset extends Asset {
   constructor(version: string, env = new Env()) {
-    super("neko", version, env);
+    super('neko', version, env);
   }
 
   get downloadUrl() {
-    const tag = `v${this.version.replace(/\./g, "-")}`;
+    const tag = `v${this.version.replace(/\./g, '-')}`;
     return super.makeDownloadUrl(
       `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`
     );
@@ -70,9 +115,9 @@ export class NekoAsset extends AbstractAsset {
 
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
-export class HaxeAsset extends AbstractAsset {
+export class HaxeAsset extends Asset {
   constructor(version: string, env = new Env()) {
-    super("haxe", version, env);
+    super('haxe', version, env);
   }
 
   get downloadUrl() {
@@ -82,7 +127,7 @@ export class HaxeAsset extends AbstractAsset {
   }
 
   get target() {
-    if (this.env.platform === "osx") {
+    if (this.env.platform === 'osx') {
       return `${this.env.platform}`;
     } else {
       return `${this.env.platform}${this.env.arch}`;
@@ -102,12 +147,12 @@ export class Env {
   get platform() {
     const plat = os.platform();
     switch (plat) {
-      case "linux":
-        return "linux";
-      case "win32":
-        return "win";
-      case "darwin":
-        return "osx";
+      case 'linux':
+        return 'linux';
+      case 'win32':
+        return 'win';
+      case 'darwin':
+        return 'osx';
       default:
         throw new Error(`${plat} not supported`);
     }
@@ -116,8 +161,8 @@ export class Env {
   get arch() {
     const arch = os.arch();
     switch (arch) {
-      case "x64":
-        return "64";
+      case 'x64':
+        return '64';
       default:
         throw new Error(`${arch} not supported`);
     }
