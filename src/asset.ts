@@ -11,18 +11,7 @@ import { exec } from "@actions/exec";
 
 export type AssetFileExt = ".zip" | ".tar.gz";
 
-export interface Asset {
-  readonly name: string;
-  readonly version: string;
-  readonly downloadUrl: string;
-  readonly fileNameWithoutExt: string;
-  readonly fileExt: AssetFileExt;
-  readonly isDirectoryNested: boolean;
-
-  setup(): Promise<string>;
-}
-
-abstract class AbstractAsset implements Asset {
+abstract class Asset {
   constructor(
     readonly name: string,
     readonly version: string,
@@ -37,7 +26,7 @@ abstract class AbstractAsset implements Asset {
     return await tc.cacheDir(await this.download(), this.name, this.version);
   }
 
-  async download() {
+  private async download() {
     const downloadPath = await tc.downloadTool(this.downloadUrl);
     const extractPath = await this.extract(
       downloadPath,
@@ -53,7 +42,7 @@ abstract class AbstractAsset implements Asset {
     return toolRoot;
   }
 
-  extract(file: string, dest: string, ext: AssetFileExt) {
+  private extract(file: string, dest: string, ext: AssetFileExt) {
     switch (ext) {
       case ".tar.gz":
         return tc.extractTar(file, dest);
@@ -65,7 +54,7 @@ abstract class AbstractAsset implements Asset {
   }
 
   // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
-  async findToolRoot(extractPath: string, nested: boolean) {
+  private async findToolRoot(extractPath: string, nested: boolean) {
     if (!nested) {
       return extractPath;
     }
@@ -86,15 +75,15 @@ abstract class AbstractAsset implements Asset {
     return found ? toolRoot : null;
   }
 
-  abstract get downloadUrl(): string;
-  abstract get fileNameWithoutExt(): string;
-  abstract get isDirectoryNested(): boolean;
+  protected abstract get downloadUrl(): string;
+  protected abstract get fileNameWithoutExt(): string;
+  protected abstract get isDirectoryNested(): boolean;
 
-  makeDownloadUrl(path: string) {
+  protected makeDownloadUrl(path: string) {
     return `https://github.com/HaxeFoundation${path}`;
   }
 
-  get fileExt(): AssetFileExt {
+  protected get fileExt(): AssetFileExt {
     switch (this.env.platform) {
       case "win":
         return ".zip";
@@ -107,7 +96,7 @@ abstract class AbstractAsset implements Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-osx64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
-export class NekoAsset extends AbstractAsset {
+export class NekoAsset extends Asset {
   constructor(version: string, env = new Env()) {
     super("neko", version, env);
   }
@@ -134,7 +123,7 @@ export class NekoAsset extends AbstractAsset {
 
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
-export class HaxeAsset extends AbstractAsset {
+export class HaxeAsset extends Asset {
   constructor(version: string, env = new Env()) {
     super("haxe", version, env);
   }

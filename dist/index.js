@@ -979,7 +979,7 @@ const os = __importStar(__webpack_require__(87));
 const tc = __importStar(__webpack_require__(533));
 const core = __importStar(__webpack_require__(470));
 const exec_1 = __webpack_require__(986);
-class AbstractAsset {
+class Asset {
     constructor(name, version, env) {
         this.name = name;
         this.version = version;
@@ -1053,7 +1053,7 @@ class AbstractAsset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-osx64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
-class NekoAsset extends AbstractAsset {
+class NekoAsset extends Asset {
     constructor(version, env = new Env()) {
         super("neko", version, env);
     }
@@ -1074,7 +1074,7 @@ class NekoAsset extends AbstractAsset {
 exports.NekoAsset = NekoAsset;
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
-class HaxeAsset extends AbstractAsset {
+class HaxeAsset extends Asset {
     constructor(version, env = new Env()) {
         super("haxe", version, env);
     }
