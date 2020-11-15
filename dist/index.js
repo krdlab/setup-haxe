@@ -1057,6 +1057,10 @@ class NekoAsset extends Asset {
     constructor(version, env = new Env()) {
         super('neko', version, env);
     }
+    static resolveFromHaxeVersion(version) {
+        const nekoVer = version.startsWith('3.') ? '2.2.0' : '2.3.0';
+        return new NekoAsset(nekoVer);
+    }
     get downloadUrl() {
         const tag = `v${this.version.replace(/\./g, '-')}`;
         return super.makeDownloadUrl(`/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`);
@@ -2682,7 +2686,7 @@ const asset_1 = __webpack_require__(27);
 const env = new asset_1.Env();
 function setup(version) {
     return __awaiter(this, void 0, void 0, function* () {
-        const neko = new asset_1.NekoAsset('2.3.0'); // haxelib requires Neko
+        const neko = asset_1.NekoAsset.resolveFromHaxeVersion(version); // haxelib requires Neko
         const nekoPath = yield neko.setup();
         core.addPath(nekoPath);
         core.exportVariable('NEKOPATH', nekoPath);

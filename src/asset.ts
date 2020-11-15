@@ -93,6 +93,11 @@ export class NekoAsset extends Asset {
     super('neko', version, env);
   }
 
+  static resolveFromHaxeVersion(version: string) {
+    const nekoVer = version.startsWith('3.') ? '2.2.0' : '2.3.0';
+    return new NekoAsset(nekoVer);
+  }
+
   get downloadUrl() {
     const tag = `v${this.version.replace(/\./g, '-')}`;
     return super.makeDownloadUrl(
