@@ -5,7 +5,7 @@ inputs:
   haxe-version:
     description: 'Version Spec of the version to use. Example: 3.4.7'
     required: true
-    default: '4.0.5'
+    default: '4.1.5'
 runs:
   using: 'node12'
   main: 'dist/index.js'
