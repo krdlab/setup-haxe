@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: krdlab/setup-haxe@v1
         with:
-          haxe-version: 4.1.5
+          haxe-version: 4.2.0
       - run: |
           haxe -version
           haxelib install hxnodejs
