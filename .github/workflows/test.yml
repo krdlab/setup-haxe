@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        haxe: [4.2.3, 3.4.7]
+        haxe: [4.2.4, 3.4.7]
       fail-fast: true
     runs-on: ${{ matrix.os }}
     steps:
