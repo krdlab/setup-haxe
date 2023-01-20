@@ -10,9 +10,10 @@ import { setup } from './setup';
 async function main(): Promise<void> {
   try {
     const inputVersion = core.getInput('haxe-version');
-    const version = semver.valid(semver.clean(inputVersion));
+    const nightly = core.getBooleanInput('haxe-nightly');
+    const version = nightly ? inputVersion : semver.valid(semver.clean(inputVersion));
     if (version) {
-      await setup(version);
+      await setup(version, nightly);
     }
   } catch (error) {
     core.setFailed(error.message);

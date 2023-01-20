@@ -1169,10 +1169,14 @@ exports.NekoAsset = NekoAsset;
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
 class HaxeAsset extends Asset {
-    constructor(version, env = new Env()) {
+    constructor(version, nightly, env = new Env()) {
         super('haxe', version, env);
+        this.nightly = false;
+        this.nightly = nightly;
     }
     get downloadUrl() {
+        if (this.nightly)
+            return `https://build.haxe.org/builds/haxe/${this.nightlyTarget}/${this.fileNameWithoutExt}${this.fileExt}`;
         return super.makeDownloadUrl(`/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
@@ -1183,7 +1187,22 @@ class HaxeAsset extends Asset {
             return `${this.env.platform}${this.env.arch}`;
         }
     }
+    get nightlyTarget() {
+        const plat = this.env.platform;
+        switch (plat) {
+            case 'osx':
+                return 'mac';
+            case 'linux':
+                return 'linux64';
+            case 'win':
+                return 'windows64';
+            default:
+                throw new Error(`${plat} not supported`);
+        }
+    }
     get fileNameWithoutExt() {
+        if (this.nightly)
+            return `haxe_${this.version}`;
         return `haxe-${this.version}-${this.target}`;
     }
     get isDirectoryNested() {
@@ -2837,9 +2856,10 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const inputVersion = core.getInput('haxe-version');
-            const version = semver.valid(semver.clean(inputVersion));
+            const nightly = core.getBooleanInput('haxe-nightly');
+            const version = nightly ? inputVersion : semver.valid(semver.clean(inputVersion));
             if (version) {
-                yield setup_1.setup(version);
+                yield setup_1.setup(version, nightly);
             }
         }
         catch (error) {
@@ -3203,14 +3223,14 @@ const core = __importStar(__webpack_require__(470));
 const exec_1 = __webpack_require__(986);
 const asset_1 = __webpack_require__(27);
 const env = new asset_1.Env();
-function setup(version) {
+function setup(version, nightly) {
     return __awaiter(this, void 0, void 0, function* () {
         const neko = new asset_1.NekoAsset('2.3.0'); // haxelib requires Neko
         const nekoPath = yield neko.setup();
         core.addPath(nekoPath);
         core.exportVariable('NEKOPATH', nekoPath);
         core.exportVariable('LD_LIBRARY_PATH', `${nekoPath}:$LD_LIBRARY_PATH`);
-        const haxe = new asset_1.HaxeAsset(version);
+        const haxe = new asset_1.HaxeAsset(version, nightly);
         const haxePath = yield haxe.setup();
         core.addPath(haxePath);
         core.exportVariable('HAXE_STD_PATH', path.join(haxePath, 'std'));
