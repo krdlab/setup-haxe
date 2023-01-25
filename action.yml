@@ -6,10 +6,6 @@ inputs:
     description: 'Version Spec of the version to use. Example: 4.2.5'
     required: true
     default: '4.2.5'
-  haxe-nightly:
-    description: 'Use haxe nightlies instead of releases.'
-    required: false
-    default: false
 runs:
   using: 'node16'
   main: 'dist/index.js'

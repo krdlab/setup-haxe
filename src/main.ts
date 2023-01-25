@@ -10,7 +10,7 @@ import { setup } from './setup';
 async function main(): Promise<void> {
   try {
     const inputVersion = core.getInput('haxe-version');
-    const nightly = core.getBooleanInput('haxe-nightly');
+    const nightly = /^(\d{4}-\d{2}-\d{2}_[\w\.-]+_\w+)|latest$/.test(inputVersion);
     const version = nightly ? inputVersion : semver.valid(semver.clean(inputVersion));
     if (version) {
       await setup(version, nightly);
