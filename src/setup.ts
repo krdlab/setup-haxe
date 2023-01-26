@@ -10,14 +10,14 @@ import { NekoAsset, HaxeAsset, Env } from './asset';
 
 const env = new Env();
 
-export async function setup(version: string) {
+export async function setup(version: string, nightly: boolean) {
   const neko = new NekoAsset('2.3.0'); // haxelib requires Neko
   const nekoPath = await neko.setup();
   core.addPath(nekoPath);
   core.exportVariable('NEKOPATH', nekoPath);
   core.exportVariable('LD_LIBRARY_PATH', `${nekoPath}:$LD_LIBRARY_PATH`);
 
-  const haxe = new HaxeAsset(version);
+  const haxe = new HaxeAsset(version, nightly);
   const haxePath = await haxe.setup();
   core.addPath(haxePath);
   core.exportVariable('HAXE_STD_PATH', path.join(haxePath, 'std'));

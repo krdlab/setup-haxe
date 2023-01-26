@@ -116,11 +116,16 @@ export class NekoAsset extends Asset {
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
 export class HaxeAsset extends Asset {
-  constructor(version: string, env = new Env()) {
+  nightly = false;
+
+  constructor(version: string, nightly: boolean, env = new Env()) {
     super('haxe', version, env);
+    this.nightly = nightly;
   }
 
   get downloadUrl() {
+    if (this.nightly)
+      return `https://build.haxe.org/builds/haxe/${this.nightlyTarget}/${this.fileNameWithoutExt}${this.fileExt}`;
     return super.makeDownloadUrl(
       `/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`
     );
@@ -134,7 +139,22 @@ export class HaxeAsset extends Asset {
     }
   }
 
+  get nightlyTarget() {
+    const plat = this.env.platform;
+    switch (plat) {
+      case 'osx':
+        return 'mac';
+      case 'linux':
+        return 'linux64';
+      case 'win':
+        return 'windows64';
+      default:
+        throw new Error(`${plat} not supported`);
+    }
+  }
+
   get fileNameWithoutExt() {
+    if (this.nightly) return `haxe_${this.version}`;
     return `haxe-${this.version}-${this.target}`;
   }
 
