@@ -1,5 +1,8 @@
 # setup-haxe
 
+[![Build Status](https://github.com/krdlab/setup-haxe/actions/workflows/test.yml/badge.svg "GitHub Actions")](https://github.com/krdlab/setup-haxe/actions/workflows/test.yml)
+[![License](https://img.shields.io/github/license/krdlab/setup-haxe.svg?label=license)](#license)
+
 This action sets up a Haxe environment for use in your workflows.
 
 ## Usage
