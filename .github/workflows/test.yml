@@ -1,22 +1,56 @@
+# https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions
 name: CI
 
-on: [push]
+on:
+  push:
+    branches:    # build all branches
+    - '**'
+    tags-ignore: # but don't build tags
+    - '**'
+    paths-ignore:
+    - '**/*.md'
+    - '.github/*.yml'
+  pull_request:
+  workflow_dispatch:
+    # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        haxe: [4.2.5, 3.4.7, latest]
-      fail-fast: true
     runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./
-        with:
-          haxe-version: ${{ matrix.haxe }}
-      - run: haxe -version
-      - run: haxelib install hxnodejs
 
-      - name: Compile test code
-        run: haxe -cp test-workflow -lib hxnodejs -main Main -js test-workflow.js
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - macos-latest
+        - ubuntu-latest
+        - windows-latest
+        haxe: 
+        - latest
+        - 4.2.5
+        - 3.4.7
+
+    steps:
+
+    - name: Git Checkout
+      uses: actions/checkout@v3 #https://github.com/actions/checkout
+
+    - uses: ./
+      with:
+        haxe-version: ${{ matrix.haxe }}
+
+    - run: haxe -version
+
+    - run: haxelib install hxnodejs
+
+    - name: Compile test code
+      run: |
+        haxe \
+          -cp test-workflow \
+          -lib hxnodejs \
+          -main Main \
+          -js test-workflow.js

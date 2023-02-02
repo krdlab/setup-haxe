@@ -1151,11 +1151,17 @@ class NekoAsset extends Asset {
     constructor(version, env = new Env()) {
         super('neko', version, env);
     }
+    static resolveFromHaxeVersion(version) {
+        const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.3.0'; // Haxe 3 only supports neko 2.1
+        return new NekoAsset(nekoVer);
+    }
     get downloadUrl() {
         const tag = `v${this.version.replace(/\./g, '-')}`;
         return super.makeDownloadUrl(`/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
+        if (this.env.platform === 'win' && this.version.startsWith('2.1')) // no 64bit version of neko 2.1 available for windows
+            return this.env.platform;
         return `${this.env.platform}${this.env.arch}`;
     }
     get fileNameWithoutExt() {
@@ -1180,12 +1186,12 @@ class HaxeAsset extends Asset {
         return super.makeDownloadUrl(`/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
-        if (this.env.platform === 'osx') {
-            return `${this.env.platform}`;
-        }
-        else {
-            return `${this.env.platform}${this.env.arch}`;
-        }
+        if (this.env.platform === 'osx')
+            return this.env.platform;
+        if (this.env.platform === 'win' && this.version.startsWith('3.'))
+            // no 64bit version of neko 2.1 available for windows, thus we can also only use 32bit version of Haxe 3
+            return this.env.platform;
+        return `${this.env.platform}${this.env.arch}`;
     }
     get nightlyTarget() {
         const plat = this.env.platform;
@@ -3225,7 +3231,7 @@ const asset_1 = __webpack_require__(27);
 const env = new asset_1.Env();
 function setup(version, nightly) {
     return __awaiter(this, void 0, void 0, function* () {
-        const neko = new asset_1.NekoAsset('2.3.0'); // haxelib requires Neko
+        const neko = asset_1.NekoAsset.resolveFromHaxeVersion(version); // haxelib requires Neko
         const nekoPath = yield neko.setup();
         core.addPath(nekoPath);
         core.exportVariable('NEKOPATH', nekoPath);
