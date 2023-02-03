@@ -1,6 +1,6 @@
 {
   "name": "setup-haxe",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "setup haxe action",
   "private": true,
   "main": "lib/main.js",
