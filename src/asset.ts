@@ -93,6 +93,11 @@ export class NekoAsset extends Asset {
     super('neko', version, env);
   }
 
+  static resolveFromHaxeVersion(version: string) {
+    const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.3.0';  // Haxe 3 only supports neko 2.1
+    return new NekoAsset(nekoVer);
+  }
+
   get downloadUrl() {
     const tag = `v${this.version.replace(/\./g, '-')}`;
     return super.makeDownloadUrl(
@@ -101,6 +106,8 @@ export class NekoAsset extends Asset {
   }
 
   get target() {
+    if (this.env.platform === 'win' && this.version.startsWith('2.1')) // no 64bit version of neko 2.1 available for windows
+      return this.env.platform;
     return `${this.env.platform}${this.env.arch}`;
   }
 
@@ -132,11 +139,14 @@ export class HaxeAsset extends Asset {
   }
 
   get target() {
-    if (this.env.platform === 'osx') {
-      return `${this.env.platform}`;
-    } else {
-      return `${this.env.platform}${this.env.arch}`;
-    }
+    if (this.env.platform === 'osx')
+      return this.env.platform;
+
+    if (this.env.platform === 'win' && this.version.startsWith('3.'))
+      // no 64bit version of neko 2.1 available for windows, thus we can also only use 32bit version of Haxe 3
+      return this.env.platform;
+
+    return `${this.env.platform}${this.env.arch}`;
   }
 
   get nightlyTarget() {

@@ -11,7 +11,7 @@ import { NekoAsset, HaxeAsset, Env } from './asset';
 const env = new Env();
 
 export async function setup(version: string, nightly: boolean) {
-  const neko = new NekoAsset('2.3.0'); // haxelib requires Neko
+  const neko = NekoAsset.resolveFromHaxeVersion(version); // haxelib requires Neko
   const nekoPath = await neko.setup();
   core.addPath(nekoPath);
   core.exportVariable('NEKOPATH', nekoPath);
