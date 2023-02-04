@@ -2,7 +2,13 @@
   "name": "setup-haxe",
   "version": "1.4.1",
   "description": "setup haxe action",
+  "author": "Sho Kuroda <krdlab@gmail.com>",
+  "license": "MIT",
   "private": true,
+  "engines": {
+    "node": ">=16",
+    "npm": ">=9"
+  },
   "main": "lib/main.js",
   "scripts": {
     "tsc": "tsc",
@@ -16,8 +22,6 @@
     "haxe",
     "setup"
   ],
-  "author": "Sho Kuroda <krdlab@gmail.com>",
-  "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.9.1",
     "@actions/exec": "^1.0.3",
@@ -27,7 +31,7 @@
   "devDependencies": {
     "@types/node": "^13.7.6",
     "@types/semver": "^7.1.0",
-    "@zeit/ncc": "^0.21.1",
+    "@vercel/ncc": "^0.36.1",
     "typescript": "^3.8.2"
   }
 }
