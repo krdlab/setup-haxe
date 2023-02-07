@@ -1,143 +1,173 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 5789:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ 3109:
+/***/ ((module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
-
+__nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var semver__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(1383);
+/* harmony import */ var semver__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(semver__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _setup__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(8412);
 // Copyright (c) 2020 Sho Kuroda <krdlab@gmail.com>
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
+
+
+
+async function main() {
+    try {
+        const inputVersion = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('haxe-version');
+        const nightly = /^(\d{4}-\d{2}-\d{2}_[\w.-]+_\w+)|latest$/.test(inputVersion);
+        const version = nightly ? inputVersion : semver__WEBPACK_IMPORTED_MODULE_1__.valid(semver__WEBPACK_IMPORTED_MODULE_1__.clean(inputVersion));
+        if (version) {
+            await (0,_setup__WEBPACK_IMPORTED_MODULE_2__/* .setup */ .c)(version, nightly);
+        }
+    }
+    catch (error) { // eslint-disable-line @typescript-eslint/no-implicit-any-catch
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
+    }
+}
+await main();
+
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
+/***/ 8412:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "c": () => (/* binding */ setup)
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Env = exports.HaxeAsset = exports.NekoAsset = void 0;
-const path = __importStar(__nccwpck_require__(1017));
-const fs = __importStar(__nccwpck_require__(7147));
-const os = __importStar(__nccwpck_require__(2037));
-const tc = __importStar(__nccwpck_require__(7784));
-const core = __importStar(__nccwpck_require__(2186));
-const exec_1 = __nccwpck_require__(1514);
+
+;// CONCATENATED MODULE: external "node:path"
+const external_node_path_namespaceObject = require("node:path");
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(1514);
+;// CONCATENATED MODULE: external "node:fs"
+const external_node_fs_namespaceObject = require("node:fs");
+;// CONCATENATED MODULE: external "node:os"
+const external_node_os_namespaceObject = require("node:os");
+// EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
+var tool_cache = __nccwpck_require__(7784);
+;// CONCATENATED MODULE: ./lib/asset.js
+// Copyright (c) 2020 Sho Kuroda <krdlab@gmail.com>
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
+
+
+
+
+
 class Asset {
+    name;
+    version;
+    env;
     constructor(name, version, env) {
         this.name = name;
         this.version = version;
         this.env = env;
     }
-    setup() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const toolPath = tc.find(this.name, this.version);
-            if (!!toolPath) {
-                return Promise.resolve(toolPath);
-            }
-            return yield tc.cacheDir(yield this.download(), this.name, this.version);
-        });
-    }
-    download() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const downloadPath = yield tc.downloadTool(this.downloadUrl);
-            const extractPath = yield this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
-            const toolRoot = yield this.findToolRoot(extractPath, this.isDirectoryNested);
-            if (!toolRoot) {
-                throw new Error(`tool directory not found: ${extractPath}`);
-            }
-            core.debug(`found toolRoot: ${toolRoot}`);
-            return toolRoot;
-        });
-    }
-    extract(file, dest, ext) {
-        if (fs.existsSync(dest)) {
-            fs.rmdirSync(dest, { recursive: true });
+    async setup() {
+        const toolPath = tool_cache.find(this.name, this.version);
+        if (toolPath) {
+            return toolPath;
         }
-        switch (ext) {
-            case '.tar.gz':
-                return tc.extractTar(file, dest);
-            case '.zip':
-                return tc.extractZip(file, dest);
-            default:
-                throw Error(`unknown ext: ${ext}`);
-        }
-    }
-    // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
-    findToolRoot(extractPath, nested) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!nested) {
-                return extractPath;
-            }
-            let found = false;
-            let toolRoot = '';
-            yield exec_1.exec('ls', ['-1', extractPath], {
-                listeners: {
-                    stdout: (data) => {
-                        const entry = data.toString().trim();
-                        if (entry.length > 0) {
-                            toolRoot = path.join(extractPath, entry);
-                            found = true;
-                        }
-                    },
-                },
-            });
-            return found ? toolRoot : null;
-        });
+        return tool_cache.cacheDir(await this.download(), this.name, this.version);
     }
     makeDownloadUrl(path) {
         return `https://github.com/HaxeFoundation${path}`;
     }
     get fileExt() {
         switch (this.env.platform) {
-            case 'win':
+            case 'win': {
                 return '.zip';
-            default:
+            }
+            default: {
                 return '.tar.gz';
+            }
         }
+    }
+    async download() {
+        const downloadPath = await tool_cache.downloadTool(this.downloadUrl);
+        const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
+        const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
+        if (!toolRoot) {
+            throw new Error(`tool directory not found: ${extractPath}`);
+        }
+        core.debug(`found toolRoot: ${toolRoot}`);
+        return toolRoot;
+    }
+    extract(file, dest, ext) {
+        if (external_node_fs_namespaceObject.existsSync(dest)) {
+            external_node_fs_namespaceObject.rmdirSync(dest, { recursive: true });
+        }
+        switch (ext) {
+            case '.tar.gz': {
+                return tool_cache.extractTar(file, dest);
+            }
+            case '.zip': {
+                return tool_cache.extractZip(file, dest);
+            }
+            default: {
+                throw new Error(`unknown ext: ${ext}`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+            }
+        }
+    }
+    // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
+    async findToolRoot(extractPath, nested) {
+        if (!nested) {
+            return extractPath;
+        }
+        let found = false;
+        let toolRoot = '';
+        await (0,exec.exec)('ls', ['-1', extractPath], {
+            listeners: {
+                stdout(data) {
+                    const entry = data.toString().trim();
+                    if (entry.length > 0) {
+                        toolRoot = external_node_path_namespaceObject.join(extractPath, entry);
+                        found = true;
+                    }
+                },
+            },
+        });
+        return found ? toolRoot : null;
     }
 }
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-osx64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
 class NekoAsset extends Asset {
-    constructor(version, env = new Env()) {
-        super('neko', version, env);
-    }
     static resolveFromHaxeVersion(version) {
         const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.3.0'; // Haxe 3 only supports neko 2.1
         return new NekoAsset(nekoVer);
+    }
+    constructor(version, env = new Env()) {
+        super('neko', version, env);
     }
     get downloadUrl() {
         const tag = `v${this.version.replace(/\./g, '-')}`;
         return super.makeDownloadUrl(`/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
-        if (this.env.platform === 'win' && this.version.startsWith('2.1')) // no 64bit version of neko 2.1 available for windows
+        // No 64bit version of neko 2.1 available for windows
+        if (this.env.platform === 'win' && this.version.startsWith('2.1')) {
             return this.env.platform;
+        }
         return `${this.env.platform}${this.env.arch}`;
     }
     get fileNameWithoutExt() {
@@ -147,208 +177,118 @@ class NekoAsset extends Asset {
         return true;
     }
 }
-exports.NekoAsset = NekoAsset;
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
 class HaxeAsset extends Asset {
+    nightly = false;
     constructor(version, nightly, env = new Env()) {
         super('haxe', version, env);
-        this.nightly = false;
         this.nightly = nightly;
     }
     get downloadUrl() {
-        if (this.nightly)
+        if (this.nightly) {
             return `https://build.haxe.org/builds/haxe/${this.nightlyTarget}/${this.fileNameWithoutExt}${this.fileExt}`;
+        }
         return super.makeDownloadUrl(`/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
-        if (this.env.platform === 'osx')
+        if (this.env.platform === 'osx') {
             return this.env.platform;
-        if (this.env.platform === 'win' && this.version.startsWith('3.'))
-            // no 64bit version of neko 2.1 available for windows, thus we can also only use 32bit version of Haxe 3
+        }
+        // No 64bit version of neko 2.1 available for windows, thus we can also only use 32bit version of Haxe 3
+        if (this.env.platform === 'win' && this.version.startsWith('3.')) {
             return this.env.platform;
+        }
         return `${this.env.platform}${this.env.arch}`;
     }
     get nightlyTarget() {
         const plat = this.env.platform;
         switch (plat) {
-            case 'osx':
+            case 'osx': {
                 return 'mac';
-            case 'linux':
+            }
+            case 'linux': {
                 return 'linux64';
-            case 'win':
+            }
+            case 'win': {
                 return 'windows64';
-            default:
-                throw new Error(`${plat} not supported`);
+            }
+            default: {
+                throw new Error(`${plat} not supported`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+            }
         }
     }
     get fileNameWithoutExt() {
-        if (this.nightly)
+        if (this.nightly) {
             return `haxe_${this.version}`;
+        }
         return `haxe-${this.version}-${this.target}`;
     }
     get isDirectoryNested() {
         return true;
     }
 }
-exports.HaxeAsset = HaxeAsset;
 class Env {
     get platform() {
-        const plat = os.platform();
+        const plat = external_node_os_namespaceObject.platform();
         switch (plat) {
-            case 'linux':
+            case 'linux': {
                 return 'linux';
-            case 'win32':
+            }
+            case 'win32': {
                 return 'win';
-            case 'darwin':
+            }
+            case 'darwin': {
                 return 'osx';
-            default:
+            }
+            default: {
                 throw new Error(`${plat} not supported`);
+            }
         }
     }
     get arch() {
-        const arch = os.arch();
+        const arch = external_node_os_namespaceObject.arch();
         switch (arch) {
-            case 'x64':
+            case 'x64': {
                 return '64';
-            default:
+            }
+            default: {
                 throw new Error(`${arch} not supported`);
+            }
         }
     }
 }
-exports.Env = Env;
 
-
-/***/ }),
-
-/***/ 3109:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
+;// CONCATENATED MODULE: ./lib/setup.js
 // Copyright (c) 2020 Sho Kuroda <krdlab@gmail.com>
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
-const semver = __importStar(__nccwpck_require__(1383));
-const setup_1 = __nccwpck_require__(7391);
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const inputVersion = core.getInput('haxe-version');
-            const nightly = /^(\d{4}-\d{2}-\d{2}_[\w\.-]+_\w+)|latest$/.test(inputVersion);
-            const version = nightly ? inputVersion : semver.valid(semver.clean(inputVersion));
-            if (version) {
-                yield setup_1.setup(version, nightly);
-            }
-        }
-        catch (error) {
-            core.setFailed(error.message);
-        }
-    });
+
+
+
+
+const env = new Env();
+async function setup(version, nightly) {
+    const neko = NekoAsset.resolveFromHaxeVersion(version); // Haxelib requires Neko
+    const nekoPath = await neko.setup();
+    core.addPath(nekoPath);
+    core.exportVariable('NEKOPATH', nekoPath);
+    core.exportVariable('LD_LIBRARY_PATH', `${nekoPath}:$LD_LIBRARY_PATH`);
+    const haxe = new HaxeAsset(version, nightly);
+    const haxePath = await haxe.setup();
+    core.addPath(haxePath);
+    core.exportVariable('HAXE_STD_PATH', external_node_path_namespaceObject.join(haxePath, 'std'));
+    if (env.platform === 'osx') {
+        // Ref: https://github.com/asdf-community/asdf-haxe/pull/7
+        await (0,exec.exec)('ln', [
+            '-sfv',
+            external_node_path_namespaceObject.join(nekoPath, 'libneko.2.dylib'),
+            external_node_path_namespaceObject.join(haxePath, 'libneko.2.dylib'),
+        ]);
+    }
+    await (0,exec.exec)('haxelib', ['setup', external_node_path_namespaceObject.join(haxePath, 'lib')]);
 }
-main();
-
-
-/***/ }),
-
-/***/ 7391:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Copyright (c) 2020 Sho Kuroda <krdlab@gmail.com>
-//
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setup = void 0;
-const path = __importStar(__nccwpck_require__(1017));
-const core = __importStar(__nccwpck_require__(2186));
-const exec_1 = __nccwpck_require__(1514);
-const asset_1 = __nccwpck_require__(5789);
-const env = new asset_1.Env();
-function setup(version, nightly) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const neko = asset_1.NekoAsset.resolveFromHaxeVersion(version); // haxelib requires Neko
-        const nekoPath = yield neko.setup();
-        core.addPath(nekoPath);
-        core.exportVariable('NEKOPATH', nekoPath);
-        core.exportVariable('LD_LIBRARY_PATH', `${nekoPath}:$LD_LIBRARY_PATH`);
-        const haxe = new asset_1.HaxeAsset(version, nightly);
-        const haxePath = yield haxe.setup();
-        core.addPath(haxePath);
-        core.exportVariable('HAXE_STD_PATH', path.join(haxePath, 'std'));
-        if (env.platform === 'osx') {
-            // ref: https://github.com/asdf-community/asdf-haxe/pull/7
-            yield exec_1.exec('ln', [
-                '-sfv',
-                path.join(nekoPath, 'libneko.2.dylib'),
-                path.join(haxePath, 'libneko.2.dylib'),
-            ]);
-        }
-        yield exec_1.exec('haxelib', ['setup', path.join(haxePath, 'lib')]);
-    });
-}
-exports.setup = setup;
 
 
 /***/ }),
@@ -10801,6 +10741,115 @@ module.exports = require("util");
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/async module */
+/******/ 	(() => {
+/******/ 		var webpackQueues = typeof Symbol === "function" ? Symbol("webpack queues") : "__webpack_queues__";
+/******/ 		var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
+/******/ 		var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
+/******/ 		var resolveQueue = (queue) => {
+/******/ 			if(queue && !queue.d) {
+/******/ 				queue.d = 1;
+/******/ 				queue.forEach((fn) => (fn.r--));
+/******/ 				queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
+/******/ 			}
+/******/ 		}
+/******/ 		var wrapDeps = (deps) => (deps.map((dep) => {
+/******/ 			if(dep !== null && typeof dep === "object") {
+/******/ 				if(dep[webpackQueues]) return dep;
+/******/ 				if(dep.then) {
+/******/ 					var queue = [];
+/******/ 					queue.d = 0;
+/******/ 					dep.then((r) => {
+/******/ 						obj[webpackExports] = r;
+/******/ 						resolveQueue(queue);
+/******/ 					}, (e) => {
+/******/ 						obj[webpackError] = e;
+/******/ 						resolveQueue(queue);
+/******/ 					});
+/******/ 					var obj = {};
+/******/ 					obj[webpackQueues] = (fn) => (fn(queue));
+/******/ 					return obj;
+/******/ 				}
+/******/ 			}
+/******/ 			var ret = {};
+/******/ 			ret[webpackQueues] = x => {};
+/******/ 			ret[webpackExports] = dep;
+/******/ 			return ret;
+/******/ 		}));
+/******/ 		__nccwpck_require__.a = (module, body, hasAwait) => {
+/******/ 			var queue;
+/******/ 			hasAwait && ((queue = []).d = 1);
+/******/ 			var depQueues = new Set();
+/******/ 			var exports = module.exports;
+/******/ 			var currentDeps;
+/******/ 			var outerResolve;
+/******/ 			var reject;
+/******/ 			var promise = new Promise((resolve, rej) => {
+/******/ 				reject = rej;
+/******/ 				outerResolve = resolve;
+/******/ 			});
+/******/ 			promise[webpackExports] = exports;
+/******/ 			promise[webpackQueues] = (fn) => (queue && fn(queue), depQueues.forEach(fn), promise["catch"](x => {}));
+/******/ 			module.exports = promise;
+/******/ 			body((deps) => {
+/******/ 				currentDeps = wrapDeps(deps);
+/******/ 				var fn;
+/******/ 				var getResult = () => (currentDeps.map((d) => {
+/******/ 					if(d[webpackError]) throw d[webpackError];
+/******/ 					return d[webpackExports];
+/******/ 				}))
+/******/ 				var promise = new Promise((resolve) => {
+/******/ 					fn = () => (resolve(getResult));
+/******/ 					fn.r = 0;
+/******/ 					var fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
+/******/ 					currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
+/******/ 				});
+/******/ 				return fn.r ? promise : getResult();
+/******/ 			}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
+/******/ 			queue && (queue.d = 0);
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
@@ -10809,7 +10858,7 @@ module.exports = require("util");
 /******/ 	
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	// This entry module used 'module' so it can't be inlined
 /******/ 	var __webpack_exports__ = __nccwpck_require__(3109);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
