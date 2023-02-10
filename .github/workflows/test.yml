@@ -39,7 +39,14 @@ jobs:
     - name: Git Checkout
       uses: actions/checkout@v3 #https://github.com/actions/checkout
 
-    - uses: ./
+    - name: Install Haxe ${{ matrix.haxe }}
+      uses: ./
+      with:
+        haxe-version: ${{ matrix.haxe }}
+
+    # install twice to verify re-installation works
+    - name: Install Haxe ${{ matrix.haxe }} 
+      uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}
 

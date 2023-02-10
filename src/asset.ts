@@ -4,6 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 import * as path from 'path';
+import * as fs from 'fs';
 import * as os from 'os';
 import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
@@ -35,6 +36,9 @@ abstract class Asset {
   }
 
   private extract(file: string, dest: string, ext: AssetFileExt) {
+    if (fs.existsSync(dest)) {
+      fs.rmdirSync(dest, { recursive: true });
+    }
     switch (ext) {
       case '.tar.gz':
         return tc.extractTar(file, dest);
