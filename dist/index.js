@@ -1069,6 +1069,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = __importStar(__webpack_require__(622));
+const fs = __importStar(__webpack_require__(747));
 const os = __importStar(__webpack_require__(87));
 const tc = __importStar(__webpack_require__(533));
 const core = __importStar(__webpack_require__(470));
@@ -1101,6 +1102,9 @@ class Asset {
         });
     }
     extract(file, dest, ext) {
+        if (fs.existsSync(dest)) {
+            fs.rmdirSync(dest, { recursive: true });
+        }
         switch (ext) {
             case '.tar.gz':
                 return tc.extractTar(file, dest);
