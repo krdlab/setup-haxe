@@ -2,13 +2,20 @@
   "name": "setup-haxe",
   "version": "1.4.1",
   "description": "setup haxe action",
+  "author": "Sho Kuroda <krdlab@gmail.com>",
+  "license": "MIT",
   "private": true,
+  "engines": {
+    "node": ">=16",
+    "npm": ">=9"
+  },
   "main": "lib/main.js",
   "scripts": {
     "tsc": "tsc",
     "build": "tsc",
     "pack": "ncc build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "xo",
+    "format": "xo --fix",
     "dist": "npm run build && npm run pack"
   },
   "keywords": [
@@ -16,8 +23,6 @@
     "haxe",
     "setup"
   ],
-  "author": "Sho Kuroda <krdlab@gmail.com>",
-  "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.9.1",
     "@actions/exec": "^1.0.3",
@@ -25,9 +30,19 @@
     "semver": "^7.1.3"
   },
   "devDependencies": {
-    "@types/node": "^13.7.6",
+    "@types/node": "^16",
     "@types/semver": "^7.1.0",
-    "@zeit/ncc": "^0.21.1",
-    "typescript": "^3.8.2"
+    "@vercel/ncc": "^0.36.1",
+    "typescript": "^4",
+    "xo": "^0.53.1"
+  },
+  "xo": {
+    "space": true,
+    "rules": {
+      "import/extensions": "off",
+      "@typescript-eslint/object-curly-spacing": "off",
+      "unicorn/no-array-method-this-argument": "off",
+      "unicorn/no-array-callback-reference": "off"
+    }
   }
 }

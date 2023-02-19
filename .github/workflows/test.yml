@@ -29,7 +29,7 @@ jobs:
         - macos-latest
         - ubuntu-latest
         - windows-latest
-        haxe: 
+        haxe:
         - latest
         - 4.2.5
         - 3.4.7
@@ -39,13 +39,17 @@ jobs:
     - name: Git Checkout
       uses: actions/checkout@v3 #https://github.com/actions/checkout
 
+    - run: |
+        npm ci
+        npm run test
+
     - name: Install Haxe ${{ matrix.haxe }}
       uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}
 
     # install twice to verify re-installation works
-    - name: Install Haxe ${{ matrix.haxe }} 
+    - name: Install Haxe ${{ matrix.haxe }}
       uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}

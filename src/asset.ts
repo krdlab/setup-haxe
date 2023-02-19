@@ -3,9 +3,9 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
 import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
@@ -17,10 +17,31 @@ abstract class Asset {
 
   async setup() {
     const toolPath = tc.find(this.name, this.version);
-    if (!!toolPath) {
-      return Promise.resolve(toolPath);
+    if (toolPath) {
+      return toolPath;
     }
-    return await tc.cacheDir(await this.download(), this.name, this.version);
+
+    return tc.cacheDir(await this.download(), this.name, this.version);
+  }
+
+  protected abstract get downloadUrl(): string;
+  protected abstract get fileNameWithoutExt(): string;
+  protected abstract get isDirectoryNested(): boolean;
+
+  protected makeDownloadUrl(path: string) {
+    return `https://github.com/HaxeFoundation${path}`;
+  }
+
+  protected get fileExt(): AssetFileExt {
+    switch (this.env.platform) {
+      case 'win': {
+        return '.zip';
+      }
+
+      default: {
+        return '.tar.gz';
+      }
+    }
   }
 
   private async download() {
@@ -31,21 +52,28 @@ abstract class Asset {
     if (!toolRoot) {
       throw new Error(`tool directory not found: ${extractPath}`);
     }
+
     core.debug(`found toolRoot: ${toolRoot}`);
     return toolRoot;
   }
 
-  private extract(file: string, dest: string, ext: AssetFileExt) {
+  private async extract(file: string, dest: string, ext: AssetFileExt) {
     if (fs.existsSync(dest)) {
       fs.rmdirSync(dest, { recursive: true });
     }
+
     switch (ext) {
-      case '.tar.gz':
+      case '.tar.gz': {
         return tc.extractTar(file, dest);
-      case '.zip':
+      }
+
+      case '.zip': {
         return tc.extractZip(file, dest);
-      default:
-        throw Error(`unknown ext: ${ext}`);
+      }
+
+      default: {
+        throw new Error(`unknown ext: ${ext}`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+      }
     }
   }
 
@@ -59,7 +87,7 @@ abstract class Asset {
     let toolRoot = '';
     await exec('ls', ['-1', extractPath], {
       listeners: {
-        stdout: (data) => {
+        stdout(data) {
           const entry = data.toString().trim();
           if (entry.length > 0) {
             toolRoot = path.join(extractPath, entry);
@@ -70,48 +98,34 @@ abstract class Asset {
     });
     return found ? toolRoot : null;
   }
-
-  protected abstract get downloadUrl(): string;
-  protected abstract get fileNameWithoutExt(): string;
-  protected abstract get isDirectoryNested(): boolean;
-
-  protected makeDownloadUrl(path: string) {
-    return `https://github.com/HaxeFoundation${path}`;
-  }
-
-  protected get fileExt(): AssetFileExt {
-    switch (this.env.platform) {
-      case 'win':
-        return '.zip';
-      default:
-        return '.tar.gz';
-    }
-  }
 }
 
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-osx64.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
 export class NekoAsset extends Asset {
-  constructor(version: string, env = new Env()) {
-    super('neko', version, env);
+  static resolveFromHaxeVersion(version: string) {
+    const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.3.0'; // Haxe 3 only supports neko 2.1
+    return new NekoAsset(nekoVer);
   }
 
-  static resolveFromHaxeVersion(version: string) {
-    const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.3.0';  // Haxe 3 only supports neko 2.1
-    return new NekoAsset(nekoVer);
+  constructor(version: string, env = new Env()) {
+    super('neko', version, env);
   }
 
   get downloadUrl() {
     const tag = `v${this.version.replace(/\./g, '-')}`;
     return super.makeDownloadUrl(
-      `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`
+      `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`,
     );
   }
 
   get target() {
-    if (this.env.platform === 'win' && this.version.startsWith('2.1')) // no 64bit version of neko 2.1 available for windows
+    // No 64bit version of neko 2.1 available for windows
+    if (this.env.platform === 'win' && this.version.startsWith('2.1')) {
       return this.env.platform;
+    }
+
     return `${this.env.platform}${this.env.arch}`;
   }
 
@@ -135,20 +149,24 @@ export class HaxeAsset extends Asset {
   }
 
   get downloadUrl() {
-    if (this.nightly)
+    if (this.nightly) {
       return `https://build.haxe.org/builds/haxe/${this.nightlyTarget}/${this.fileNameWithoutExt}${this.fileExt}`;
+    }
+
     return super.makeDownloadUrl(
-      `/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`
+      `/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`,
     );
   }
 
   get target() {
-    if (this.env.platform === 'osx')
+    if (this.env.platform === 'osx') {
       return this.env.platform;
+    }
 
-    if (this.env.platform === 'win' && this.version.startsWith('3.'))
-      // no 64bit version of neko 2.1 available for windows, thus we can also only use 32bit version of Haxe 3
+    // No 64bit version of neko 2.1 available for windows, thus we can also only use 32bit version of Haxe 3
+    if (this.env.platform === 'win' && this.version.startsWith('3.')) {
       return this.env.platform;
+    }
 
     return `${this.env.platform}${this.env.arch}`;
   }
@@ -156,19 +174,29 @@ export class HaxeAsset extends Asset {
   get nightlyTarget() {
     const plat = this.env.platform;
     switch (plat) {
-      case 'osx':
+      case 'osx': {
         return 'mac';
-      case 'linux':
+      }
+
+      case 'linux': {
         return 'linux64';
-      case 'win':
+      }
+
+      case 'win': {
         return 'windows64';
-      default:
-        throw new Error(`${plat} not supported`);
+      }
+
+      default: {
+        throw new Error(`${plat} not supported`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+      }
     }
   }
 
   get fileNameWithoutExt() {
-    if (this.nightly) return `haxe_${this.version}`;
+    if (this.nightly) {
+      return `haxe_${this.version}`;
+    }
+
     return `haxe-${this.version}-${this.target}`;
   }
 
@@ -181,24 +209,34 @@ export class Env {
   get platform() {
     const plat = os.platform();
     switch (plat) {
-      case 'linux':
+      case 'linux': {
         return 'linux';
-      case 'win32':
+      }
+
+      case 'win32': {
         return 'win';
-      case 'darwin':
+      }
+
+      case 'darwin': {
         return 'osx';
-      default:
+      }
+
+      default: {
         throw new Error(`${plat} not supported`);
+      }
     }
   }
 
   get arch() {
     const arch = os.arch();
     switch (arch) {
-      case 'x64':
+      case 'x64': {
         return '64';
-      default:
+      }
+
+      default: {
         throw new Error(`${arch} not supported`);
+      }
     }
   }
 }
