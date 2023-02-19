@@ -111,7 +111,7 @@ class Asset {
         core.debug(`found toolRoot: ${toolRoot}`);
         return toolRoot;
     }
-    extract(file, dest, ext) {
+    async extract(file, dest, ext) {
         if (external_node_fs_namespaceObject.existsSync(dest)) {
             external_node_fs_namespaceObject.rmdirSync(dest, { recursive: true });
         }
