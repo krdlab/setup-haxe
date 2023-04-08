@@ -13,7 +13,7 @@
   "scripts": {
     "tsc": "tsc",
     "build": "tsc",
-    "pack": "ncc build",
+    "pack": "ncc build && ncc build -o dist/cache-save src/cache-save.ts",
     "test": "xo",
     "format": "xo --fix",
     "dist": "npm run build && npm run pack"

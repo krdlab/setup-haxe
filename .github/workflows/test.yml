@@ -43,6 +43,8 @@ jobs:
         npm ci
         npm run test
 
+    - run: echo '-lib hxnodejs' > lib.hxml
+
     - name: Install Haxe ${{ matrix.haxe }}
       uses: ./
       with:
@@ -53,10 +55,11 @@ jobs:
       uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}
+        cache-dependency-path: 'lib.hxml'
 
     - run: haxe -version
 
-    - run: haxelib install hxnodejs
+    - run: haxelib install lib.hxml --always
 
     - name: Compile test code
       run: |
