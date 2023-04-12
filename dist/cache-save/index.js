@@ -59001,30 +59001,20 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "run": () => (/* binding */ run)
 /* harmony export */ });
-/* harmony import */ var node_process__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7742);
-/* harmony import */ var node_process__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_process__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _haxelib__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6191);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _haxelib__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(6191);
 
 
-
-// Catch and log any unhandled exceptions.  These exceptions can leak out of the uploadChunk method in
-// @actions/toolkit when a failed upload closes the file descriptor causing any in-process reads to
-// throw an uncaught exception.  Instead of failing this action, just warn.
-node_process__WEBPACK_IMPORTED_MODULE_0__.on('uncaughtException', error => {
-    const warningPrefix = '[warning]';
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.info(`${warningPrefix}${error.message}`);
-});
 async function run() {
     try {
-        const cacheDependencyPath = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('cache-dependency-path');
+        const cacheDependencyPath = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cache-dependency-path');
         if (cacheDependencyPath.length > 0) {
-            await (0,_haxelib__WEBPACK_IMPORTED_MODULE_2__/* .saveHaxelib */ .X)();
+            await (0,_haxelib__WEBPACK_IMPORTED_MODULE_1__/* .saveHaxelib */ .X)();
         }
     }
     catch (error) { // eslint-disable-line @typescript-eslint/no-implicit-any-catch
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed(error.message);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
     }
 }
 await run();
@@ -59182,14 +59172,6 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
-
-/***/ }),
-
-/***/ 7742:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:process");
 
 /***/ }),
 
