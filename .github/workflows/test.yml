@@ -53,10 +53,11 @@ jobs:
       uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}
+        cache-dependency-path: 'test-workflow/lib.hxml'
 
     - run: haxe -version
 
-    - run: haxelib install hxnodejs
+    - run: haxelib install test-workflow/lib.hxml --always
 
     - name: Compile test code
       run: |

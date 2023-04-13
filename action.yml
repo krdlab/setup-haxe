@@ -6,9 +6,14 @@ inputs:
     description: 'Version Spec of the version to use. Example: 4.3.0'
     required: true
     default: '4.3.0'
+  cache-dependency-path:
+    description: 'Used to specify the path to a dependency file.'
+    required: false
 runs:
   using: 'node16'
   main: 'dist/index.js'
+  post: 'dist/cache-save/index.js'
+  post-if: success()
 branding:
   icon: 'download'
   color: 'gray-dark'

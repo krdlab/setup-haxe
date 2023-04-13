@@ -34,3 +34,18 @@ jobs:
           haxe-version: latest  # Install 'haxe_latest.tar.gz' from https://build.haxe.org/builds/haxe/linux64/
       - run: haxe -version
 ```
+
+Caching global packages data:
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.2.5
+          cache-dependency-path: 'lib.hxml'
+      - run: |
+          haxe -version
+          haxelib install lib.hxml --always
+```
