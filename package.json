@@ -9,7 +9,7 @@
     "node": ">=16",
     "npm": ">=9"
   },
-  "main": "dist/index.js",
+  "main": "lib/main.js",
   "scripts": {
     "tsc": "tsc",
     "build": "tsc",
