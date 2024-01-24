@@ -10,7 +10,7 @@ inputs:
     description: 'Used to specify the path to a dependency file.'
     required: false
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
   post: 'dist/cache-save/index.js'
   post-if: success()
