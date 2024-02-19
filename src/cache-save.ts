@@ -7,8 +7,8 @@ export async function run() {
     if (cacheDependencyPath.length > 0) {
       await saveHaxelib();
     }
-  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-implicit-any-catch
-    core.setFailed(error.message);
+  } catch (error: unknown) {
+    core.setFailed(typeof error === 'string' ? error : String(error));
   }
 }
 

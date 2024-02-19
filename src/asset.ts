@@ -10,7 +10,7 @@ import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 
-export type AssetFileExt = '.zip' | '.tar.gz';
+export type AssetFileExtension = '.zip' | '.tar.gz';
 
 abstract class Asset {
   constructor(readonly name: string, readonly version: string, protected readonly env: Env) {}
@@ -32,7 +32,7 @@ abstract class Asset {
     return `https://github.com/HaxeFoundation${path}`;
   }
 
-  protected get fileExt(): AssetFileExt {
+  protected get fileExt(): AssetFileExtension {
     switch (this.env.platform) {
       case 'win': {
         return '.zip';
@@ -57,22 +57,18 @@ abstract class Asset {
     return toolRoot;
   }
 
-  private async extract(file: string, dest: string, ext: AssetFileExt) {
-    if (fs.existsSync(dest)) {
-      fs.rmdirSync(dest, { recursive: true });
+  private async extract(file: string, destination: string, extension: AssetFileExtension) {
+    if (fs.existsSync(destination)) {
+      fs.rmdirSync(destination, { recursive: true });
     }
 
-    switch (ext) {
+    switch (extension) {
       case '.tar.gz': {
-        return tc.extractTar(file, dest);
+        return tc.extractTar(file, destination);
       }
 
       case '.zip': {
-        return tc.extractZip(file, dest);
-      }
-
-      default: {
-        throw new Error(`unknown ext: ${ext}`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+        return tc.extractZip(file, destination);
       }
     }
   }
@@ -105,8 +101,8 @@ abstract class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
 export class NekoAsset extends Asset {
   static resolveFromHaxeVersion(version: string) {
-    const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.3.0'; // Haxe 3 only supports neko 2.1
-    return new NekoAsset(nekoVer);
+    const nekoVersion = version.startsWith('3.') ? '2.1.0' : '2.3.0'; // Haxe 3 only supports neko 2.1
+    return new NekoAsset(nekoVersion);
   }
 
   constructor(version: string, env = new Env()) {
@@ -114,7 +110,7 @@ export class NekoAsset extends Asset {
   }
 
   get downloadUrl() {
-    const tag = `v${this.version.replace(/\./g, '-')}`;
+    const tag = `v${this.version.replaceAll('.', '-')}`;
     return super.makeDownloadUrl(
       `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`,
     );
@@ -185,11 +181,9 @@ export class HaxeAsset extends Asset {
       case 'win': {
         return 'windows64';
       }
-
-      default: {
-        throw new Error(`${plat} not supported`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
-      }
     }
+
+    return null;
   }
 
   get fileNameWithoutExt() {

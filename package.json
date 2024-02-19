@@ -45,6 +45,14 @@
       "@typescript-eslint/object-curly-spacing": "off",
       "unicorn/no-array-method-this-argument": "off",
       "unicorn/no-array-callback-reference": "off"
-    }
+    },
+    "overrides": [
+      {
+        "files": "**/*.ts",
+        "rules": {
+          "default-case": "off"
+        }
+      }
+    ]
   }
 }
