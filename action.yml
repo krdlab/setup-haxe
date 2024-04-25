@@ -3,9 +3,9 @@ description: 'Setup a Haxe environment and add it to the PATH'
 author: 'Sho Kuroda <krdlab@gmail.com>'
 inputs:
   haxe-version:
-    description: 'Version Spec of the version to use. Example: 4.3.1'
+    description: 'Version Spec of the version to use. Example: 4.3.4'
     required: true
-    default: '4.3.1'
+    default: '4.3.4'
   cache-dependency-path:
     description: 'Used to specify the path to a dependency file.'
     required: false

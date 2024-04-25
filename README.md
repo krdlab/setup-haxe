@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: krdlab/setup-haxe@v1
         with:
-          haxe-version: 4.3.1
+          haxe-version: 4.3.4
       - run: |
           haxe -version
           haxelib install hxnodejs
@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: krdlab/setup-haxe@v1
         with:
-          haxe-version: 4.3.1
+          haxe-version: 4.3.4
           cache-dependency-path: 'lib.hxml'
       - run: |
           haxe -version
