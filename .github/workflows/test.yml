@@ -33,6 +33,10 @@ jobs:
         - latest
         - 4.3.4
         - 3.4.7
+        include:
+        - lib_hxml: lib.hxml
+        - haxe: 3.4.7
+          lib_hxml: lib_haxe3.hxml
 
     steps:
 
@@ -53,11 +57,11 @@ jobs:
       uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}
-        cache-dependency-path: 'test-workflow/lib.hxml'
+        cache-dependency-path: 'test-workflow/${{ matrix.lib_hxml }}'
 
     - run: haxe -version
 
-    - run: haxelib install test-workflow/lib.hxml --always
+    - run: haxelib install test-workflow/${{ matrix.lib_hxml }} --always
 
     - name: Compile test code
       run: |
