@@ -149,12 +149,12 @@ class Asset {
         return found ? toolRoot : null;
     }
 }
-// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-linux64.tar.gz
-// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-osx64.tar.gz
-// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-3-0/neko-2.3.0-win64.zip
+// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0-rc-1/neko-2.3.0-rc.1-linux64.tar.gz
+// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0-rc-1/neko-2.4.0-rc.1-osx-universal.tar.gz
+// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0-rc-1/neko-2.3.0-rc.1-win64.zip
 class NekoAsset extends Asset {
     static resolveFromHaxeVersion(version) {
-        const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.3.0'; // Haxe 3 only supports neko 2.1
+        const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.4.0-rc.1'; // Haxe 3 only supports neko 2.1
         return new NekoAsset(nekoVer);
     }
     constructor(version, env = new Env()) {
@@ -168,6 +168,9 @@ class NekoAsset extends Asset {
         // No 64bit version of neko 2.1 available for windows
         if (this.env.platform === 'win' && this.version.startsWith('2.1')) {
             return this.env.platform;
+        }
+        if (this.env.platform === 'osx' && this.version.startsWith('2.4')) {
+            return 'osx-universal';
         }
         return `${this.env.platform}${this.env.arch}`;
     }
@@ -249,14 +252,13 @@ class Env {
     }
     get arch() {
         const arch = external_node_os_namespaceObject.arch();
-        switch (arch) {
-            case 'x64': {
-                return '64';
-            }
-            default: {
-                throw new Error(`${arch} not supported`);
-            }
+        if (arch === 'x64') {
+            return '64';
         }
+        if (arch === 'arm64' && this.platform === 'osx') {
+            return '64';
+        }
+        throw new Error(`${arch} not supported`);
     }
 }
 
