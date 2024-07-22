@@ -31,7 +31,7 @@ jobs:
         - windows-latest
         haxe:
         - latest
-        - 4.3.4
+        - 4.3.5
         - 3.4.7
         include:
         - lib_hxml: lib.hxml
