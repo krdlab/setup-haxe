@@ -37,6 +37,8 @@ jobs:
         - lib_hxml: lib.hxml
         - haxe: 3.4.7
           lib_hxml: lib_haxe3.hxml
+        - haxe: latest
+          os: ubuntu-24.04-arm
 
     steps:
 
