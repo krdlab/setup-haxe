@@ -105,11 +105,15 @@ abstract class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-win64.zip
 export class NekoAsset extends Asset {
   static resolveFromHaxeVersion(version: string) {
-    const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.4.0'; // Haxe 3 only supports neko 2.1
-    return new NekoAsset(nekoVer);
+    const nekoVer = '2.4.0';
+    const env = new Env();
+    // Haxe 3 on windows has 32 bit haxelib, which requires 32 bit neko
+    const force32 = version.startsWith('3.') && env.platform === 'win';
+
+    return new NekoAsset(nekoVer, force32, env);
   }
 
-  constructor(version: string, env = new Env()) {
+  constructor(version: string, protected readonly force32: boolean, env = new Env()) {
     super('neko', version, env);
   }
 
@@ -121,8 +125,7 @@ export class NekoAsset extends Asset {
   }
 
   get target() {
-    // No 64bit version of neko 2.1 available for windows
-    if (this.env.platform === 'win' && this.version.startsWith('2.1')) {
+    if (this.force32) {
       return this.env.platform;
     }
 

@@ -153,20 +153,24 @@ class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-osx-universal.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-win64.zip
 class NekoAsset extends Asset {
+    force32;
     static resolveFromHaxeVersion(version) {
-        const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.4.0'; // Haxe 3 only supports neko 2.1
-        return new NekoAsset(nekoVer);
+        const nekoVer = '2.4.0';
+        const env = new Env();
+        // Haxe 3 on windows has 32 bit haxelib, which requires 32 bit neko
+        const force32 = version.startsWith('3.') && env.platform === 'win';
+        return new NekoAsset(nekoVer, force32, env);
     }
-    constructor(version, env = new Env()) {
+    constructor(version, force32, env = new Env()) {
         super('neko', version, env);
+        this.force32 = force32;
     }
     get downloadUrl() {
         const tag = `v${this.version.replace(/\./g, '-')}`;
         return super.makeDownloadUrl(`/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`);
     }
     get target() {
-        // No 64bit version of neko 2.1 available for windows
-        if (this.env.platform === 'win' && this.version.startsWith('2.1')) {
+        if (this.force32) {
             return this.env.platform;
         }
         if (this.env.platform === 'osx' && this.version.startsWith('2.4')) {
