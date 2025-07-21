@@ -46,7 +46,8 @@ abstract class Asset {
 
   private async download() {
     const downloadPath = await tc.downloadTool(this.downloadUrl);
-    const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
+    const dest = path.join(path.dirname(downloadPath), this.fileNameWithoutExt);
+    const extractPath = await this.extract(downloadPath, dest, this.fileExt);
 
     const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
     if (!toolRoot) {
