@@ -105,7 +105,9 @@ abstract class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-win64.zip
 export class NekoAsset extends Asset {
   static resolveFromHaxeVersion(version: string) {
-    const nekoVer = version.startsWith('3.') ? '2.1.0' : '2.4.0'; // Haxe 3 only supports neko 2.1
+    const nekoVer = version.startsWith('3.') ? '2.1.0' // Haxe 3 only supports neko 2.1
+      : (version.startsWith('4.') && version < '4.3.' ? '2.3.0' // Haxe 4.0..4.2 has issues with mbedtls 3 in neko 2.4
+        : '2.4.0');
     return new NekoAsset(nekoVer);
   }
 
