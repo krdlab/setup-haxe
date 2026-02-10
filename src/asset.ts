@@ -139,22 +139,34 @@ abstract class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-osx-universal.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-win64.zip
 export class NekoAsset extends Asset {
-  static resolveFromHaxeVersion(version: string) {
+  static resolveFromHaxeVersion(version: string, nightly: boolean) {
+    const env = new Env();
+
+    if (nightly) {
+      return new NekoAsset('latest', true, false, env);
+    }
+
     // Haxe older than 4.3 has issues with mbedtls 3 in neko 2.4
     const nekoVer = version.startsWith('3.') || (version.startsWith('4.') && version < '4.3.') ? '2.3.0'
       : '2.4.0';
-    const env = new Env();
     // Haxe 3 on windows has 32 bit haxelib, which requires 32 bit neko
     const force32 = version.startsWith('3.') && env.platform === 'win';
 
-    return new NekoAsset(nekoVer, force32, env);
+    return new NekoAsset(nekoVer, false, force32, env);
   }
 
-  constructor(version: string, protected readonly force32: boolean, env = new Env()) {
+  nightly = false;
+
+  constructor(version: string, nightly: boolean, protected readonly force32: boolean, env = new Env()) {
     super('neko', version, env);
+    this.nightly = nightly;
   }
 
   get downloadUrl() {
+    if (this.nightly) {
+      return `https://build.haxe.org/builds/neko/${this.nightlyTarget}/neko_${this.version}${this.fileExt}`;
+    }
+
     const tag = `v${this.version.replace(/\./g, '-')}`;
     return super.makeDownloadUrl(
       `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`,
@@ -171,6 +183,27 @@ export class NekoAsset extends Asset {
     }
 
     return `${this.env.platform}${this.env.arch}`;
+  }
+
+  get nightlyTarget() {
+    const plat = this.env.platform;
+    switch (plat) {
+      case 'osx': {
+        return 'mac';
+      }
+
+      case 'linux': {
+        return 'linux64';
+      }
+
+      case 'win': {
+        return 'windows64';
+      }
+
+      default: {
+        throw new Error(`${plat} not supported`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+      }
+    }
   }
 
   get fileNameWithoutExt() {
