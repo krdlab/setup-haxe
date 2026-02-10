@@ -225,7 +225,7 @@ class NekoAsset extends Asset {
         const plat = this.env.platform;
         switch (plat) {
             case 'osx': {
-                return 'mac';
+                return 'mac-universal';
             }
             case 'linux': {
                 return 'linux64';
