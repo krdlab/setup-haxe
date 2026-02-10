@@ -59,6 +59,7 @@ jobs:
         haxe-version: ${{ matrix.haxe }}
         cache-dependency-path: 'test-workflow/${{ matrix.lib_hxml }}'
 
+    - run: neko -version
     - run: haxe -version
 
     - run: haxelib install test-workflow/${{ matrix.lib_hxml }} --always
