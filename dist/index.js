@@ -23,7 +23,7 @@ async function main() {
     try {
         const inputVersion = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('haxe-version');
         const cacheDependencyPath = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('cache-dependency-path');
-        const nightly = /^(\d{4}-\d{2}-\d{2}_[\w.-]+_\w+)|latest$/.test(inputVersion);
+        const nightly = /^(\d{4}-\d{2}-\d{2}_[\w./-]+_\w+)|latest$/.test(inputVersion);
         const version = nightly ? inputVersion : semver__WEBPACK_IMPORTED_MODULE_1__.valid(semver__WEBPACK_IMPORTED_MODULE_1__.clean(inputVersion));
         if (version) {
             await (0,_setup__WEBPACK_IMPORTED_MODULE_2__/* .setup */ .c)(version, nightly, cacheDependencyPath);
