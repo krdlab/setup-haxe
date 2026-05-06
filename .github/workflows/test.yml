@@ -47,6 +47,13 @@ jobs:
     - name: Git Checkout
       uses: actions/checkout@v6 #https://github.com/actions/checkout
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: .node-version
+
+    - run: npm install -g npm@11 # TODO:
+
     - run: |
         npm ci
         npm run test
