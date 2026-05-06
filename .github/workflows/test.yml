@@ -52,8 +52,6 @@ jobs:
       with:
         node-version-file: .node-version
 
-    - run: npm install -g npm@11 # TODO:
-
     - run: |
         npm ci
         npm run test

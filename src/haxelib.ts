@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
-import * as core from '@actions/core';
 import * as cache from '@actions/cache';
+import * as core from '@actions/core';
 import * as glob from '@actions/glob';
 
 enum State {
@@ -9,12 +9,14 @@ enum State {
   CacheHaxelibPath = 'HAXELIB_PATH',
 }
 
-export async function createHaxelibKey(platform: string, version: string, cacheDependencyPath: string): Promise<string> {
+export async function createHaxelibKey(
+  platform: string,
+  version: string,
+  cacheDependencyPath: string,
+): Promise<string> {
   const fileHash = await glob.hashFiles(cacheDependencyPath);
   if (!fileHash) {
-    throw new Error(
-      'Some specified paths were not resolved, unable to cache dependencies.',
-    );
+    throw new Error('Some specified paths were not resolved, unable to cache dependencies.');
   }
 
   return `haxelib-cache-${platform}-haxe${version}-${fileHash}`;
@@ -42,15 +44,11 @@ export async function saveHaxelib(): Promise<void> {
   const haxelibPath = core.getState(State.CacheHaxelibPath);
 
   if (!fs.existsSync(haxelibPath)) {
-    throw new Error(
-      `Cache folder path is retrieved but doesn't exist on disk: ${haxelibPath}`,
-    );
+    throw new Error(`Cache folder path is retrieved but doesn't exist on disk: ${haxelibPath}`);
   }
 
   if (primaryKey === restoreResult) {
-    core.info(
-      `Cache hit occurred on the primary key ${primaryKey}, not saving cache.`,
-    );
+    core.info(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
     return;
   }
 

@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as glob from '@actions/glob';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createHaxelibKey } from './haxelib';
 
 vi.mock('@actions/glob', () => ({
@@ -25,7 +25,6 @@ describe('createHaxelibKey', () => {
 
   it('throws when hashFiles returns empty', async () => {
     vi.mocked(glob.hashFiles).mockResolvedValue('');
-    await expect(createHaxelibKey('linux64', '4.3.7', 'lib.hxml'))
-      .rejects.toThrow(/unable to cache dependencies/);
+    await expect(createHaxelibKey('linux64', '4.3.7', 'lib.hxml')).rejects.toThrow(/unable to cache dependencies/);
   });
 });
