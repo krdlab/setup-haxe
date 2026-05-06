@@ -63,6 +63,7 @@ jobs:
         haxe-version: ${{ matrix.haxe }}
         cache-dependency-path: ${{ env.TEST_LIB_HXML }}
 
+    - run: neko -version
     - run: haxe -version
 
     - run: haxelib install ${{ env.TEST_LIB_HXML }} --always

@@ -12,7 +12,7 @@ import { restoreHaxelib, createHaxelibKey } from './haxelib';
 const env = new Env();
 
 export async function setup(version: string, nightly: boolean, cacheDependencyPath: string) {
-  const neko = NekoAsset.resolveFromHaxeVersion(version); // Haxelib requires Neko
+  const neko = NekoAsset.resolveFromHaxeVersion(version, nightly); // Haxelib requires Neko
   const nekoPath = await neko.setup();
   core.addPath(nekoPath);
   core.exportVariable('NEKOPATH', nekoPath);
