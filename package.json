@@ -6,16 +6,15 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=20",
-    "npm": ">=11"
+    "node": ">=20"
   },
   "main": "lib/main.js",
   "scripts": {
     "tsc": "tsc",
     "build": "tsc",
     "pack": "ncc build && ncc build -o dist/cache-save src/cache-save.ts",
-    "test": "xo && vitest run",
-    "format": "xo --fix",
+    "test": "biome check && vitest run",
+    "format": "biome check --write",
     "dist": "npm run build && npm run pack"
   },
   "keywords": [
@@ -32,29 +31,11 @@
     "semver": "^7.5.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.14",
     "@types/node": "^20.19.39",
     "@types/semver": "^7.1.0",
     "@vercel/ncc": "^0.36.1",
     "typescript": "^4",
-    "vitest": "^4.1.5",
-    "xo": "^0.53.1"
-  },
-  "xo": {
-    "space": true,
-    "rules": {
-      "import/extensions": "off",
-      "@typescript-eslint/object-curly-spacing": "off",
-      "unicorn/no-array-method-this-argument": "off",
-      "unicorn/no-array-callback-reference": "off",
-      "unicorn/expiring-todo-comments": "off"
-    },
-    "overrides": [
-      {
-        "files": "**/*.test.ts",
-        "rules": {
-          "max-params": "off"
-        }
-      }
-    ]
+    "vitest": "^4.1.5"
   }
 }

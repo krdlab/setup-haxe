@@ -1,5 +1,5 @@
-import * as os from 'node:os';
 import type * as OsType from 'node:os';
+import * as os from 'node:os';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Env, HaxeAsset, NekoAsset } from './asset';
 
@@ -97,7 +97,9 @@ describe('HaxeAsset (stable)', () => {
   it('Linux ARM64 + 4.3.7 currently falls through to linuxarm64 (unsupported upstream; pinned)', () => {
     const env = makeEnv('linux', 'arm64');
     const asset = new TestableHaxe('4.3.7', false, env);
-    expect(asset.downloadUrl).toBe('https://github.com/HaxeFoundation/haxe/releases/download/4.3.7/haxe-4.3.7-linuxarm64.tar.gz');
+    expect(asset.downloadUrl).toBe(
+      'https://github.com/HaxeFoundation/haxe/releases/download/4.3.7/haxe-4.3.7-linuxarm64.tar.gz',
+    );
     expect(asset.fileNameWithoutExt).toBe('haxe-4.3.7-linuxarm64');
   });
 });
