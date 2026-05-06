@@ -14,7 +14,7 @@
     "tsc": "tsc",
     "build": "tsc",
     "pack": "ncc build && ncc build -o dist/cache-save src/cache-save.ts",
-    "test": "xo",
+    "test": "xo && vitest run",
     "format": "xo --fix",
     "dist": "npm run build && npm run pack"
   },
@@ -32,10 +32,11 @@
     "semver": "^7.5.2"
   },
   "devDependencies": {
-    "@types/node": "^16",
+    "@types/node": "^20.19.39",
     "@types/semver": "^7.1.0",
     "@vercel/ncc": "^0.36.1",
     "typescript": "^4",
+    "vitest": "^4.1.5",
     "xo": "^0.53.1"
   },
   "xo": {
@@ -46,6 +47,14 @@
       "unicorn/no-array-method-this-argument": "off",
       "unicorn/no-array-callback-reference": "off",
       "unicorn/expiring-todo-comments": "off"
-    }
+    },
+    "overrides": [
+      {
+        "files": "**/*.test.ts",
+        "rules": {
+          "max-params": "off"
+        }
+      }
+    ]
   }
 }
