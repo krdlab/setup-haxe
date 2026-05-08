@@ -9,14 +9,18 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as process from 'node:process';
-import * as tc from '@actions/tool-cache';
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
+import * as tc from '@actions/tool-cache';
 
 export type AssetFileExt = '.zip' | '.tar.gz';
 
 abstract class Asset {
-  constructor(readonly name: string, readonly version: string, protected readonly env: Env) {}
+  constructor(
+    readonly name: string,
+    readonly version: string,
+    protected readonly env: Env,
+  ) {}
 
   async setup() {
     const toolPath = tc.find(this.name, this.version);
@@ -107,7 +111,7 @@ abstract class Asset {
       }
 
       default: {
-        throw new Error(`unknown ext: ${ext}`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+        throw new Error(`unknown ext: ${ext}`);
       }
     }
   }
@@ -147,8 +151,7 @@ export class NekoAsset extends Asset {
     }
 
     // Haxe older than 4.3 has issues with mbedtls 3 in neko 2.4
-    const nekoVer = version.startsWith('3.') || (version.startsWith('4.') && version < '4.3.') ? '2.3.0'
-      : '2.4.0';
+    const nekoVer = version.startsWith('3.') || (version.startsWith('4.') && version < '4.3.') ? '2.3.0' : '2.4.0';
     // Haxe 3 on windows has 32 bit haxelib, which requires 32 bit neko
     const force32 = version.startsWith('3.') && env.platform === 'win';
 
@@ -157,7 +160,12 @@ export class NekoAsset extends Asset {
 
   nightly = false;
 
-  constructor(version: string, nightly: boolean, protected readonly force32: boolean, env = new Env()) {
+  constructor(
+    version: string,
+    nightly: boolean,
+    protected readonly force32: boolean,
+    env = new Env(),
+  ) {
     super('neko', version, env);
     this.nightly = nightly;
   }
@@ -168,9 +176,7 @@ export class NekoAsset extends Asset {
     }
 
     const tag = `v${this.version.replace(/\./g, '-')}`;
-    return super.makeDownloadUrl(
-      `/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`,
-    );
+    return super.makeDownloadUrl(`/neko/releases/download/${tag}/${this.fileNameWithoutExt}${this.fileExt}`);
   }
 
   get target() {
@@ -205,7 +211,7 @@ export class NekoAsset extends Asset {
       }
 
       default: {
-        throw new Error(`${plat} not supported`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+        throw new Error(`${plat} not supported`);
       }
     }
   }
@@ -235,9 +241,7 @@ export class HaxeAsset extends Asset {
       return `https://build.haxe.org/builds/haxe/${this.nightlyTarget}/${this.fileNameWithoutExt}${this.fileExt}`;
     }
 
-    return super.makeDownloadUrl(
-      `/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`,
-    );
+    return super.makeDownloadUrl(`/haxe/releases/download/${this.version}/${this.fileNameWithoutExt}${this.fileExt}`);
   }
 
   get target() {
@@ -269,7 +273,7 @@ export class HaxeAsset extends Asset {
       }
 
       default: {
-        throw new Error(`${plat} not supported`); // eslint-disable-line @typescript-eslint/restrict-template-expressions
+        throw new Error(`${plat} not supported`);
       }
     }
   }

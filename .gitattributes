@@ -1,0 +1,8 @@
+# Normalize line endings to LF for cross-platform consistency.
+# Without this, actions/checkout on Windows runners converts text files
+# to CRLF and biome (formatter) flags every line as a mismatch.
+* text=auto eol=lf
+
+# Windows-specific scripts must keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
