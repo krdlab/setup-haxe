@@ -13,11 +13,11 @@ import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import * as tc from '@actions/tool-cache';
 
-export type AssetFileExt = '.zip' | '.tar.gz';
+type AssetFileExt = '.zip' | '.tar.gz';
 
 type Tool = 'haxe' | 'neko';
 
-export type Resolution =
+type Resolution =
   | { kind: 'stable'; cachePlatform: string; archiveTarget: string }
   | { kind: 'nightly'; cachePlatform: string; nightlyPathSegment: string }
   | { kind: 'unsupported'; reason: string };

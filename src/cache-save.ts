@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import { saveHaxelib } from './haxelib';
 
-export async function run() {
+async function run() {
   try {
     const cacheDependencyPath = core.getInput('cache-dependency-path');
     if (cacheDependencyPath.length > 0) {
