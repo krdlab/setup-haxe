@@ -8,19 +8,46 @@ on:
     tags-ignore: # but don't build tags
     - '**'
     paths-ignore:
+    # NOTE: '.github/*.yml' matches only files directly under .github/ (e.g. dependabot.yml).
+    # Workflow files under .github/workflows/ intentionally trigger CI when edited.
     - '**/*.md'
     - '.github/*.yml'
   pull_request:
   workflow_dispatch:
     # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     shell: bash
 
 jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Git Checkout
+      uses: actions/checkout@v6
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: .node-version
+        cache: npm
+
+    - run: npm ci
+    - run: npm run test
+
   build:
+    needs: lint-and-unit
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
@@ -47,22 +74,12 @@ jobs:
     - name: Git Checkout
       uses: actions/checkout@v6 #https://github.com/actions/checkout
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: .node-version
-
-    - run: |
-        npm ci
-        npm run test
-
     - name: Install Haxe ${{ matrix.haxe }}
       uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}
 
-    # install twice to verify re-installation works
-    - name: Install Haxe ${{ matrix.haxe }}
+    - name: Re-install Haxe ${{ matrix.haxe }} (idempotency check)
       uses: ./
       with:
         haxe-version: ${{ matrix.haxe }}
