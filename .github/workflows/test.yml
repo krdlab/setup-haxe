@@ -43,6 +43,9 @@ jobs:
 
     - run: npm ci
     - run: npm run test
+    - run: npm run dist
+    - name: Verify committed dist is up to date
+      run: git diff --exit-code -- dist
 
   build:
     needs: lint-and-unit
