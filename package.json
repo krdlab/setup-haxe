@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "main": "lib/main.js",
   "scripts": {
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
-    "@types/node": "^20.19.39",
+    "@types/node": "^24.1.0",
     "@types/semver": "^7.1.0",
     "@vercel/ncc": "^0.36.1",
     "typescript": "^4",
