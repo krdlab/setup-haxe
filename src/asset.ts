@@ -330,15 +330,12 @@ export class NekoAsset extends Asset {
     return new NekoAsset(nekoVer, false, force32);
   }
 
-  nightly = false;
-
   constructor(
     version: string,
-    nightly: boolean,
+    protected readonly nightly: boolean,
     protected readonly force32: boolean,
   ) {
     super('neko', version);
-    this.nightly = nightly;
   }
 
   get cachePlatform() {
@@ -377,11 +374,11 @@ export class NekoAsset extends Asset {
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
 // * NOTE https://build.haxe.org/builds/haxe/mac/haxe_latest.tar.gz
 export class HaxeAsset extends Asset {
-  nightly = false;
-
-  constructor(version: string, nightly: boolean) {
+  constructor(
+    version: string,
+    protected readonly nightly: boolean,
+  ) {
     super('haxe', version);
-    this.nightly = nightly;
   }
 
   get cachePlatform() {

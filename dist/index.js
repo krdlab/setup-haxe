@@ -301,6 +301,7 @@ class Asset {
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-osx-universal.tar.gz
 // * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-win64.zip
 class NekoAsset extends Asset {
+    nightly;
     force32;
     static resolveFromHaxeVersion(version, nightly) {
         if (nightly) {
@@ -312,11 +313,10 @@ class NekoAsset extends Asset {
         const force32 = version.startsWith('3.') && external_node_os_.platform() === 'win32';
         return new NekoAsset(nekoVer, false, force32);
     }
-    nightly = false;
     constructor(version, nightly, force32) {
         super('neko', version);
-        this.force32 = force32;
         this.nightly = nightly;
+        this.force32 = force32;
     }
     get cachePlatform() {
         return this.requireSupported(this.resolve('neko', this.force32)).cachePlatform;
@@ -347,7 +347,7 @@ class NekoAsset extends Asset {
 // * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
 // * NOTE https://build.haxe.org/builds/haxe/mac/haxe_latest.tar.gz
 class HaxeAsset extends Asset {
-    nightly = false;
+    nightly;
     constructor(version, nightly) {
         super('haxe', version);
         this.nightly = nightly;
