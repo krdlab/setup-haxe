@@ -3,27 +3,30 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
+import * as os from 'node:os';
 import * as path from 'node:path';
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
-import { Env, HaxeAsset, NekoAsset } from './asset';
+import { HaxeAsset, NekoAsset } from './asset';
 import { createHaxelibKey, restoreHaxelib } from './haxelib';
 
-const env = new Env();
-
 export async function setup(version: string, nightly: boolean, cacheDependencyPath: string) {
+  const haxe = new HaxeAsset(version, nightly);
+  // Preflight: fail fast on unsupported combinations (e.g. stable Haxe + Linux ARM64)
+  // before downloading Neko. cachePlatform throws when the resolver returns 'unsupported'.
+  const haxeCachePlatform = haxe.cachePlatform;
+
   const neko = NekoAsset.resolveFromHaxeVersion(version, nightly); // Haxelib requires Neko
   const nekoPath = await neko.setup();
   core.addPath(nekoPath);
   core.exportVariable('NEKOPATH', nekoPath);
   core.exportVariable('LD_LIBRARY_PATH', `${nekoPath}:$LD_LIBRARY_PATH`);
 
-  const haxe = new HaxeAsset(version, nightly);
   const haxePath = await haxe.setup();
   core.addPath(haxePath);
   core.exportVariable('HAXE_STD_PATH', path.join(haxePath, 'std'));
 
-  if (env.platform === 'osx') {
+  if (os.platform() === 'darwin') {
     core.exportVariable('DYLD_FALLBACK_LIBRARY_PATH', `${nekoPath}:$DYLD_FALLBACK_LIBRARY_PATH`);
 
     // Ref: https://github.com/asdf-community/asdf-haxe/pull/7
@@ -34,7 +37,7 @@ export async function setup(version: string, nightly: boolean, cacheDependencyPa
   await exec('haxelib', ['setup', haxelibPath]);
 
   if (cacheDependencyPath.length > 0) {
-    const key = await createHaxelibKey(haxe.target, version, cacheDependencyPath);
+    const key = await createHaxelibKey(haxeCachePlatform, version, cacheDependencyPath);
     await restoreHaxelib(key, haxelibPath);
   }
 }
