@@ -3,16 +3,17 @@ name: CI
 
 on:
   push:
-    branches:    # build all branches
-    - '**'
-    tags-ignore: # but don't build tags
-    - '**'
+    branches:
+    - master
     paths-ignore:
     # NOTE: '.github/*.yml' matches only files directly under .github/ (e.g. dependabot.yml).
     # Workflow files under .github/workflows/ intentionally trigger CI when edited.
     - '**/*.md'
     - '.github/*.yml'
   pull_request:
+    paths-ignore:
+    - '**/*.md'
+    - '.github/*.yml'
   workflow_dispatch:
     # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
 
