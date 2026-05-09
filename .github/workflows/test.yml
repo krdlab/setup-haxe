@@ -1,82 +1,102 @@
-# https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions
 name: CI
 
 on:
   push:
-    branches:    # build all branches
-    - '**'
-    tags-ignore: # but don't build tags
-    - '**'
+    branches:
+      - master
     paths-ignore:
-    - '**/*.md'
-    - '.github/*.yml'
+      - "**/*.md"
+      # NOTE: '.github/*.yml' matches only files directly under .github/ (e.g. dependabot.yml).
+      # Workflow files under .github/workflows/ intentionally trigger CI when edited.
+      - ".github/*.yml"
   pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - ".github/*.yml"
   workflow_dispatch:
-    # https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 defaults:
   run:
     shell: bash
 
 jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - run: npm ci
+      - run: npm run test
+      - run: npm run dist
+
+      - name: Verify committed dist is up to date
+        run: git diff --exit-code -- dist
+
   build:
+    needs: lint-and-unit
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
 
     strategy:
       fail-fast: false
       matrix:
         os:
-        - macos-latest
-        - ubuntu-latest
-        - windows-latest
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
         haxe:
-        - latest
-        - 4.3.7
-        - 3.4.7
+          - latest
+          - 4.3.7
+          - 3.4.7
         include:
-        - haxe: 3.4.7
-          hxml_suffix: _haxe3
-        - haxe: latest
-          os: ubuntu-24.04-arm
+          - haxe: 3.4.7
+            hxml_suffix: _haxe3
+          - haxe: latest
+            os: ubuntu-24.04-arm
 
     env:
       TEST_LIB_HXML: test-workflow/lib${{ matrix.hxml_suffix }}.hxml
 
     steps:
+      - name: Git Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-    - name: Git Checkout
-      uses: actions/checkout@v6 #https://github.com/actions/checkout
+      - name: Install Haxe ${{ matrix.haxe }}
+        uses: ./
+        with:
+          haxe-version: ${{ matrix.haxe }}
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: .node-version
+      - name: Re-install Haxe ${{ matrix.haxe }} (idempotency check)
+        uses: ./
+        with:
+          haxe-version: ${{ matrix.haxe }}
+          cache-dependency-path: ${{ env.TEST_LIB_HXML }}
 
-    - run: |
-        npm ci
-        npm run test
+      - run: neko -version
+      - run: haxe -version
 
-    - name: Install Haxe ${{ matrix.haxe }}
-      uses: ./
-      with:
-        haxe-version: ${{ matrix.haxe }}
+      - run: haxelib install ${{ env.TEST_LIB_HXML }} --always
 
-    # install twice to verify re-installation works
-    - name: Install Haxe ${{ matrix.haxe }}
-      uses: ./
-      with:
-        haxe-version: ${{ matrix.haxe }}
-        cache-dependency-path: ${{ env.TEST_LIB_HXML }}
-
-    - run: neko -version
-    - run: haxe -version
-
-    - run: haxelib install ${{ env.TEST_LIB_HXML }} --always
-
-    - name: Compile test code
-      run: |
-        haxe \
-          -cp test-workflow \
-          -lib hxnodejs \
-          -main Main \
-          -js test-workflow.js
+      - name: Compile test code
+        run: |
+          haxe \
+            -cp test-workflow \
+            -lib hxnodejs \
+            -main Main \
+            -js test-workflow.js
