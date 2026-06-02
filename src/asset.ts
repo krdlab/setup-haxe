@@ -5,7 +5,6 @@
 
 import type { Buffer } from 'node:buffer';
 import * as crypto from 'node:crypto';
-import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as process from 'node:process';
@@ -227,7 +226,7 @@ abstract class Asset {
 
   private async download() {
     const downloadPath = await this.downloadWithCurl(this.downloadUrl);
-    const extractPath = await this.extract(downloadPath, this.fileNameWithoutExt, this.fileExt);
+    const extractPath = await this.extract(downloadPath, this.fileExt);
 
     const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
     if (!toolRoot) {
@@ -270,10 +269,10 @@ abstract class Asset {
     return temporary;
   }
 
-  private async extract(file: string, dest: string, ext: AssetFileExt) {
-    if (fs.existsSync(dest)) {
-      fs.rmdirSync(dest, { recursive: true });
-    }
+  // Extract under a temp dir rather than the cwd.
+  private async extract(file: string, ext: AssetFileExt) {
+    const dest = path.join(this.getTempDir(), crypto.randomUUID());
+    core.debug(`extracting ${file} to ${dest}`);
 
     switch (ext) {
       case '.tar.gz': {

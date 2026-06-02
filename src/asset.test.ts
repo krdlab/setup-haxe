@@ -1,5 +1,7 @@
 import type * as OsType from 'node:os';
 import * as os from 'node:os';
+import * as path from 'node:path';
+import * as tc from '@actions/tool-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HaxeAsset, NekoAsset, resolveTarget } from './asset';
 
@@ -11,6 +13,13 @@ vi.mock('node:os', async () => {
     arch: vi.fn(() => 'x64'),
   };
 });
+
+vi.mock('@actions/tool-cache', () => ({
+  extractTar: vi.fn(),
+  extractZip: vi.fn(),
+  find: vi.fn(),
+  cacheDir: vi.fn(),
+}));
 
 function setOs(platform: string, arch: string): void {
   vi.mocked(os.platform).mockReturnValue(platform as NodeJS.Platform);
@@ -144,7 +153,7 @@ describe('NekoAsset (nightly)', () => {
     ['darwin', 'x64'],
     ['darwin', 'arm64'],
     ['win32', 'x64'],
-  ] as const)('%s/%s extract dir name = neko_latest (symmetric with HaxeAsset)', (platform, arch) => {
+  ] as const)('%s/%s nightly fileNameWithoutExt = neko_latest (symmetric with HaxeAsset)', (platform, arch) => {
     setOs(platform, arch);
     const asset = new TestableNeko('latest', true, false);
     expect(asset.fileNameWithoutExt).toBe('neko_latest');
@@ -240,5 +249,52 @@ describe('resolveTarget cachePlatform (haxelib cache key compatibility)', () => 
     if (result.kind === 'stable') {
       expect(result.cachePlatform).toBe('win');
     }
+  });
+});
+
+// Regression test for issue #40: extract must not write into the action's cwd
+// ($GITHUB_WORKSPACE). It used to pass fileNameWithoutExt (a relative path) as
+// the dest, leaving e.g. haxe_latest/.../std in the user's checkout.
+describe('Asset.extract destination (issue #40)', () => {
+  type ExtractFn = (file: string, ext: '.tar.gz' | '.zip') => Promise<string>;
+
+  const originalRunnerTemp = process.env.RUNNER_TEMP;
+
+  beforeEach(() => {
+    process.env.RUNNER_TEMP = '/runner/temp';
+  });
+
+  afterEach(() => {
+    if (originalRunnerTemp === undefined) {
+      delete process.env.RUNNER_TEMP;
+    } else {
+      process.env.RUNNER_TEMP = originalRunnerTemp;
+    }
+  });
+
+  it('.tar.gz is extracted under RUNNER_TEMP, not a cwd-relative path', async () => {
+    const asset = new HaxeAsset('4.3.7', false);
+    const file = '/tmp/download/haxe.tar.gz';
+    await (asset as unknown as { extract: ExtractFn }).extract(file, '.tar.gz');
+
+    expect(tc.extractTar).toHaveBeenCalledTimes(1);
+    const [calledFile, dest] = vi.mocked(tc.extractTar).mock.calls[0] as [string, string];
+    expect(calledFile).toBe(file);
+    expect(path.isAbsolute(dest)).toBe(true);
+    expect(dest.startsWith('/runner/temp')).toBe(true);
+    expect(dest).not.toBe('haxe-4.3.7-linux64');
+  });
+
+  it('.zip is extracted under RUNNER_TEMP, not a cwd-relative path', async () => {
+    const asset = new HaxeAsset('4.3.7', false);
+    const file = '/tmp/download/haxe.zip';
+    await (asset as unknown as { extract: ExtractFn }).extract(file, '.zip');
+
+    expect(tc.extractZip).toHaveBeenCalledTimes(1);
+    const [calledFile, dest] = vi.mocked(tc.extractZip).mock.calls[0] as [string, string];
+    expect(calledFile).toBe(file);
+    expect(path.isAbsolute(dest)).toBe(true);
+    expect(dest.startsWith('/runner/temp')).toBe(true);
+    expect(dest).not.toBe('haxe-4.3.7-linux64');
   });
 });
