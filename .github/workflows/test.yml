@@ -88,6 +88,16 @@ jobs:
           haxe-version: ${{ matrix.haxe }}
           cache-dependency-path: ${{ env.TEST_LIB_HXML }}
 
+      - name: "Working directory must stay clean after setup (issue #40)"
+        run: |
+          dirty="$(git status --porcelain)"
+          if [ -n "$dirty" ]; then
+            echo "::error::setup-haxe left files in the working directory (see issue #40):"
+            echo "$dirty"
+            exit 1
+          fi
+          echo "Working directory is clean after setup-haxe."
+
       - run: neko -version
       - run: haxe -version
 
