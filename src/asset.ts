@@ -237,8 +237,8 @@ abstract class Asset {
     return toolRoot;
   }
 
-  // Use curl because the toolkit's http-client does not support relative redirects.
-  // see: https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
+  // NOTE: the toolkit's http-client does not support relative redirects, so use curl.
+  // https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
   private async downloadWithCurl(url: string) {
     const validUrl = new URL(url);
     const dest = path.join(this.getTempDir(), crypto.randomUUID());
@@ -263,13 +263,14 @@ abstract class Asset {
   }
 
   private getTempDir() {
-    // See: https://docs.github.com/en/actions/reference/workflows-and-actions/variables
+    // NOTE: prefer RUNNER_TEMP so artifacts are placed in the runner's per-job temporary directory.
+    // https://docs.github.com/en/actions/reference/workflows-and-actions/variables
     const temporary = process.env.RUNNER_TEMP ?? os.tmpdir();
     core.debug(`temporary directory: ${temporary}`);
     return temporary;
   }
 
-  // Extract under a temp dir rather than the cwd.
+  // NOTE: avoid cwd-relative extraction, which unpacks into GITHUB_WORKSPACE and leaves files in the user's checkout (#40).
   private async extract(file: string, ext: AssetFileExt) {
     const dest = path.join(this.getTempDir(), crypto.randomUUID());
     core.debug(`extracting ${file} to ${dest}`);
@@ -289,7 +290,8 @@ abstract class Asset {
     }
   }
 
-  // * NOTE: tar xz -C haxe-4.0.5-linux64 -f haxe-4.0.5-linux64.tar.gz --> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
+  // NOTE: upstream archives contain the tool under a single top-level directory.
+  // e.g. haxe-4.0.5-linux64.tar.gz -> haxe-4.0.5-linux64/haxe_20191217082701_67feacebc
   private async findToolRoot(extractPath: string, nested: boolean) {
     if (!nested) {
       return extractPath;
@@ -312,18 +314,15 @@ abstract class Asset {
   }
 }
 
-// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-linux64.tar.gz
-// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-osx-universal.tar.gz
-// * NOTE https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-win64.zip
 export class NekoAsset extends Asset {
   static resolveFromHaxeVersion(version: string, nightly: boolean) {
     if (nightly) {
       return new NekoAsset('latest', true, false);
     }
 
-    // Haxe older than 4.3 has issues with mbedtls 3 in neko 2.4
+    // NOTE: Haxe older than 4.3 has known issues with mbedtls 3 in Neko 2.4.
     const nekoVer = version.startsWith('3.') || (version.startsWith('4.') && version < '4.3.') ? '2.3.0' : '2.4.0';
-    // Haxe 3 on windows has 32 bit haxelib, which requires 32 bit neko
+    // NOTE: Haxe 3 on Windows has 32-bit haxelib, which requires 32-bit Neko.
     const force32 = version.startsWith('3.') && os.platform() === 'win32';
 
     return new NekoAsset(nekoVer, false, force32);
@@ -341,6 +340,9 @@ export class NekoAsset extends Asset {
     return this.requireSupported(this.resolve('neko', this.force32)).cachePlatform;
   }
 
+  // NOTE: example URLs built below (tag uses '-' as separator, e.g. 2.4.0 -> v2-4-0).
+  //   stable:  https://github.com/HaxeFoundation/neko/releases/download/v2-4-0/neko-2.4.0-linux64.tar.gz
+  //   nightly: https://build.haxe.org/builds/neko/mac-universal/neko_latest.tar.gz
   get downloadUrl() {
     const resolution = this.requireSupported(this.resolve('neko', this.force32));
     if (resolution.kind === 'nightly') {
@@ -369,9 +371,6 @@ export class NekoAsset extends Asset {
   }
 }
 
-// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
-// * NOTE https://github.com/HaxeFoundation/haxe/releases/download/3.4.7/haxe-3.4.7-win64.zip
-// * NOTE https://build.haxe.org/builds/haxe/mac/haxe_latest.tar.gz
 export class HaxeAsset extends Asset {
   constructor(
     version: string,
@@ -384,6 +383,9 @@ export class HaxeAsset extends Asset {
     return this.requireSupported(this.resolve('haxe')).cachePlatform;
   }
 
+  // NOTE: example URLs built below.
+  //   stable:  https://github.com/HaxeFoundation/haxe/releases/download/4.0.5/haxe-4.0.5-linux64.tar.gz
+  //   nightly: https://build.haxe.org/builds/haxe/mac/haxe_latest.tar.gz
   get downloadUrl() {
     const resolution = this.requireSupported(this.resolve('haxe'));
     if (resolution.kind === 'nightly') {

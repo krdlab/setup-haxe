@@ -12,11 +12,10 @@ import { createHaxelibKey, restoreHaxelib } from './haxelib';
 
 export async function setup(version: string, nightly: boolean, cacheDependencyPath: string) {
   const haxe = new HaxeAsset(version, nightly);
-  // Preflight: fail fast on unsupported combinations (e.g. stable Haxe + Linux ARM64)
-  // before downloading Neko. cachePlatform throws when the resolver returns 'unsupported'.
+  // NOTE: fail fast on unsupported combinations (e.g. stable Haxe + Linux ARM64) before downloading Neko.
   const haxeCachePlatform = haxe.cachePlatform;
 
-  const neko = NekoAsset.resolveFromHaxeVersion(version, nightly); // Haxelib requires Neko
+  const neko = NekoAsset.resolveFromHaxeVersion(version, nightly); // NOTE: haxelib requires Neko.
   const nekoPath = await neko.setup();
   core.addPath(nekoPath);
   core.exportVariable('NEKOPATH', nekoPath);
@@ -29,7 +28,8 @@ export async function setup(version: string, nightly: boolean, cacheDependencyPa
   if (os.platform() === 'darwin') {
     core.exportVariable('DYLD_FALLBACK_LIBRARY_PATH', `${nekoPath}:$DYLD_FALLBACK_LIBRARY_PATH`);
 
-    // Ref: https://github.com/asdf-community/asdf-haxe/pull/7
+    // NOTE: the macOS dynamic loader requires libneko in the same directory as the haxe binary.
+    // https://github.com/asdf-community/asdf-haxe/pull/7
     await exec('ln', ['-sfv', path.join(nekoPath, 'libneko.2.dylib'), path.join(haxePath, 'libneko.2.dylib')]);
   }
 
