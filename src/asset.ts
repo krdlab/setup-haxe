@@ -3,7 +3,6 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-import type { Buffer } from 'node:buffer';
 import * as crypto from 'node:crypto';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -11,6 +10,7 @@ import * as process from 'node:process';
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
 import * as tc from '@actions/tool-cache';
+import { downloadWithCurl } from './curl';
 
 type AssetFileExt = '.zip' | '.tar.gz';
 
@@ -225,7 +225,8 @@ abstract class Asset {
   }
 
   private async download() {
-    const downloadPath = await this.downloadWithCurl(this.downloadUrl);
+    const downloadPath = path.join(this.getTempDir(), crypto.randomUUID());
+    await downloadWithCurl(this.downloadUrl, downloadPath);
     const extractPath = await this.extract(downloadPath, this.fileExt);
 
     const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
@@ -235,31 +236,6 @@ abstract class Asset {
 
     core.debug(`found toolRoot: ${toolRoot}`);
     return toolRoot;
-  }
-
-  // NOTE: the toolkit's http-client does not support relative redirects, so use curl.
-  // https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
-  private async downloadWithCurl(url: string) {
-    const validUrl = new URL(url);
-    const dest = path.join(this.getTempDir(), crypto.randomUUID());
-    core.debug(`downloading ${validUrl.toString()} to ${dest}`);
-
-    let stderr = '';
-    const exitCode = await exec('curl', ['-fsSL', '-o', dest, validUrl.toString()], {
-      ignoreReturnCode: true,
-      listeners: {
-        stderr(data: Buffer) {
-          stderr += data.toString();
-        },
-      },
-    });
-
-    if (exitCode !== 0) {
-      const message = stderr.trim() || 'curl exited with a non-zero status but produced no error output.';
-      throw new Error(`Failed to download asset from ${url} (curl exit code ${exitCode}): ${message}`);
-    }
-
-    return dest;
   }
 
   private getTempDir() {

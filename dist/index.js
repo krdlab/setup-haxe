@@ -11,7 +11,7 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var semver__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(1383);
 /* harmony import */ var semver__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(semver__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _setup__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(7897);
+/* harmony import */ var _setup__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(8494);
 // Copyright (c) 2020 Sho Kuroda <krdlab@gmail.com>
 //
 // This software is released under the MIT License.
@@ -40,7 +40,7 @@ __webpack_async_result__();
 
 /***/ }),
 
-/***/ 7897:
+/***/ 8494:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -3994,11 +3994,50 @@ function _unique(values) {
     return Array.from(new Set(values));
 }
 //# sourceMappingURL=tool-cache.js.map
+;// CONCATENATED MODULE: ./lib/curl.js
+// Copyright (c) 2020 Sho Kuroda <krdlab@gmail.com>
+//
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
+
+// NOTE: curl's default retry set covers timeouts and a few transient HTTP statuses, but not
+// transport failures such as exit 56, so --retry alone would not have covered #127;
+// --retry-all-errors is what widens it. (The exact default set varies by curl version, so it is
+// deliberately not enumerated here.) Retrying is safe for this idempotent GET because curl
+// discards a failed partial transfer before reusing the -o file.
+// --retry-max-time bounds when a new attempt may start; it does not cap a running transfer.
+// Combined with -f this also retries permanent failures such as a 404 from a mistyped
+// haxe-version, which costs ~7s of backoff before failing. That is the accepted tradeoff.
+// Requires curl 7.71.0+, satisfied by every GitHub-hosted runner image.
+const CURL_RETRY_ARGS = ['--retry', '3', '--retry-all-errors', '--retry-max-time', '90'];
+// NOTE: the toolkit's http-client does not support relative redirects, which build.haxe.org
+// relies on, so downloads go through curl instead of tc.downloadTool (#61).
+// https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
+async function downloadWithCurl(url, dest) {
+    const validUrl = new URL(url);
+    lib_core.debug(`downloading ${validUrl.toString()} to ${dest}`);
+    let stderr = '';
+    const exitCode = await (0,lib_exec.exec)('curl', ['-fsSL', ...CURL_RETRY_ARGS, '-o', dest, validUrl.toString()], {
+        ignoreReturnCode: true,
+        listeners: {
+            stderr(data) {
+                stderr += data.toString();
+            },
+        },
+    });
+    if (exitCode !== 0) {
+        const message = stderr.trim() || 'curl exited with a non-zero status but produced no error output.';
+        throw new Error(`Failed to download asset from ${url} (curl exit code ${exitCode}): ${message}`);
+    }
+}
+
 ;// CONCATENATED MODULE: ./lib/asset.js
 // Copyright (c) 2020 Sho Kuroda <krdlab@gmail.com>
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
+
 
 
 
@@ -4151,7 +4190,8 @@ class Asset {
         return resolution;
     }
     async download() {
-        const downloadPath = await this.downloadWithCurl(this.downloadUrl);
+        const downloadPath = external_node_path_namespaceObject.join(this.getTempDir(), external_node_crypto_.randomUUID());
+        await downloadWithCurl(this.downloadUrl, downloadPath);
         const extractPath = await this.extract(downloadPath, this.fileExt);
         const toolRoot = await this.findToolRoot(extractPath, this.isDirectoryNested);
         if (!toolRoot) {
@@ -4159,27 +4199,6 @@ class Asset {
         }
         lib_core.debug(`found toolRoot: ${toolRoot}`);
         return toolRoot;
-    }
-    // NOTE: the toolkit's http-client does not support relative redirects, so use curl.
-    // https://github.com/actions/toolkit/blob/d47594b53638f7035a96b5ec1ed1e6caae66ee8d/packages/http-client/src/index.ts#L399-L405
-    async downloadWithCurl(url) {
-        const validUrl = new URL(url);
-        const dest = external_node_path_namespaceObject.join(this.getTempDir(), external_node_crypto_.randomUUID());
-        lib_core.debug(`downloading ${validUrl.toString()} to ${dest}`);
-        let stderr = '';
-        const exitCode = await (0,lib_exec.exec)('curl', ['-fsSL', '-o', dest, validUrl.toString()], {
-            ignoreReturnCode: true,
-            listeners: {
-                stderr(data) {
-                    stderr += data.toString();
-                },
-            },
-        });
-        if (exitCode !== 0) {
-            const message = stderr.trim() || 'curl exited with a non-zero status but produced no error output.';
-            throw new Error(`Failed to download asset from ${url} (curl exit code ${exitCode}): ${message}`);
-        }
-        return dest;
     }
     getTempDir() {
         // NOTE: prefer RUNNER_TEMP so artifacts are placed in the runner's per-job temporary directory.
