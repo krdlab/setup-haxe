@@ -1,6 +1,8 @@
 import type * as OsType from 'node:os';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import type { ExecOptions } from '@actions/exec';
+import { exec } from '@actions/exec';
 import * as tc from '@actions/tool-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HaxeAsset, NekoAsset, resolveTarget } from './asset';
@@ -19,6 +21,16 @@ vi.mock('@actions/tool-cache', () => ({
   extractZip: vi.fn(),
   find: vi.fn(),
   cacheDir: vi.fn(),
+}));
+
+vi.mock('@actions/exec', () => ({
+  exec: vi.fn(),
+}));
+
+vi.mock('@actions/core', () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warning: vi.fn(),
 }));
 
 function setOs(platform: string, arch: string): void {
@@ -296,5 +308,109 @@ describe('Asset.extract destination (issue #40)', () => {
     expect(path.isAbsolute(dest)).toBe(true);
     expect(dest.startsWith('/runner/temp')).toBe(true);
     expect(dest).not.toBe('haxe-4.3.7-linux64');
+  });
+});
+
+// Characterization tests for the current downloadWithCurl contract (issue #127).
+// These pin today's behaviour before bounded retries are introduced, so that any
+// change to the argv, the error message or the number of curl invocations shows up
+// as an intentional diff rather than a silent regression.
+describe('Asset.downloadWithCurl (current contract)', () => {
+  type DownloadFn = (url: string) => Promise<string>;
+
+  const url = 'https://github.com/HaxeFoundation/haxe/releases/download/4.3.7/haxe-4.3.7-linux64.tar.gz';
+  const originalRunnerTemp = process.env.RUNNER_TEMP;
+
+  beforeEach(() => {
+    process.env.RUNNER_TEMP = '/runner/temp';
+  });
+
+  afterEach(() => {
+    if (originalRunnerTemp === undefined) {
+      delete process.env.RUNNER_TEMP;
+    } else {
+      process.env.RUNNER_TEMP = originalRunnerTemp;
+    }
+  });
+
+  function download(target = url): Promise<string> {
+    const asset = new HaxeAsset('4.3.7', false);
+    return (asset as unknown as { downloadWithCurl: DownloadFn }).downloadWithCurl(target);
+  }
+
+  function curlCall(index = 0) {
+    return vi.mocked(exec).mock.calls[index] as [string, string[], ExecOptions];
+  }
+
+  function mockCurl(exitCode: number, stderr = ''): void {
+    vi.mocked(exec).mockImplementation(async (_command, _args, options?: ExecOptions) => {
+      if (stderr) {
+        options?.listeners?.stderr?.(Buffer.from(stderr));
+      }
+
+      return exitCode;
+    });
+  }
+
+  it('invokes curl once with -fsSL and an explicit output path', async () => {
+    mockCurl(0);
+    const dest = await download();
+
+    expect(exec).toHaveBeenCalledTimes(1);
+    const [command, args] = curlCall();
+    expect(command).toBe('curl');
+    expect(args).toEqual(['-fsSL', '-o', dest, url]);
+  });
+
+  it('lets the caller inspect the exit code instead of throwing inside exec', async () => {
+    mockCurl(0);
+    await download();
+
+    const [, , options] = curlCall();
+    expect(options.ignoreReturnCode).toBe(true);
+  });
+
+  it('downloads into RUNNER_TEMP, not the working directory', async () => {
+    mockCurl(0);
+    const dest = await download();
+
+    expect(path.isAbsolute(dest)).toBe(true);
+    expect(path.dirname(dest)).toBe('/runner/temp');
+  });
+
+  it('returns the destination path on success', async () => {
+    mockCurl(0);
+    const dest = await download();
+
+    const [, args] = curlCall();
+    expect(dest).toBe(args[2]);
+  });
+
+  it('reports the url, the exit code and curl stderr on failure', async () => {
+    mockCurl(56, 'curl: (56) Connection died, tried 5 times before giving up\n');
+
+    await expect(download()).rejects.toThrow(
+      `Failed to download asset from ${url} (curl exit code 56): curl: (56) Connection died, tried 5 times before giving up`,
+    );
+  });
+
+  it('falls back to a placeholder message when curl fails silently', async () => {
+    mockCurl(56);
+
+    await expect(download()).rejects.toThrow('curl exited with a non-zero status but produced no error output.');
+  });
+
+  it('does not retry a failed download', async () => {
+    mockCurl(56, 'curl: (56) Connection died\n');
+
+    await expect(download()).rejects.toThrow(/curl exit code 56/);
+    expect(exec).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects a malformed url before spawning curl', async () => {
+    mockCurl(0);
+
+    await expect(download('not a url')).rejects.toThrow();
+    expect(exec).not.toHaveBeenCalled();
   });
 });
