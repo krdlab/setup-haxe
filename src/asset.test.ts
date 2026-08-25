@@ -1,9 +1,11 @@
 import type * as OsType from 'node:os';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { exec } from '@actions/exec';
 import * as tc from '@actions/tool-cache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HaxeAsset, NekoAsset, resolveTarget } from './asset';
+import { downloadWithCurl } from './curl';
 
 vi.mock('node:os', async () => {
   const actual = await vi.importActual<typeof OsType>('node:os');
@@ -21,8 +23,22 @@ vi.mock('@actions/tool-cache', () => ({
   cacheDir: vi.fn(),
 }));
 
-function setOs(platform: string, arch: string): void {
-  vi.mocked(os.platform).mockReturnValue(platform as NodeJS.Platform);
+vi.mock('@actions/exec', () => ({
+  exec: vi.fn(),
+}));
+
+vi.mock('@actions/core', () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warning: vi.fn(),
+}));
+
+vi.mock('./curl', () => ({
+  downloadWithCurl: vi.fn(),
+}));
+
+function setOs(platform: NodeJS.Platform, arch: NodeJS.Architecture): void {
+  vi.mocked(os.platform).mockReturnValue(platform);
   vi.mocked(os.arch).mockReturnValue(arch);
 }
 
@@ -296,5 +312,63 @@ describe('Asset.extract destination (issue #40)', () => {
     expect(path.isAbsolute(dest)).toBe(true);
     expect(dest.startsWith('/runner/temp')).toBe(true);
     expect(dest).not.toBe('haxe-4.3.7-linux64');
+  });
+});
+
+// The download destination must stay inside RUNNER_TEMP (issue #40); curl.ts only receives
+// the path, so the choice of directory is pinned here rather than in curl.test.ts.
+describe('Asset.download', () => {
+  const originalRunnerTemp = process.env.RUNNER_TEMP;
+
+  beforeEach(() => {
+    process.env.RUNNER_TEMP = '/runner/temp';
+    vi.mocked(tc.extractTar).mockResolvedValue('/runner/temp/extracted');
+    vi.mocked(exec).mockImplementation(async (_command, _args, options) => {
+      options?.listeners?.stdout?.(Buffer.from('haxe-4.3.7-linux64'));
+      return 0;
+    });
+  });
+
+  afterEach(() => {
+    if (originalRunnerTemp === undefined) {
+      delete process.env.RUNNER_TEMP;
+    } else {
+      process.env.RUNNER_TEMP = originalRunnerTemp;
+    }
+  });
+
+  it('hands curl a RUNNER_TEMP path instead of a cwd-relative one', async () => {
+    const asset = new HaxeAsset('4.3.7', false);
+    await (asset as unknown as { download: () => Promise<string> }).download();
+
+    expect(downloadWithCurl).toHaveBeenCalledTimes(1);
+    const [downloadedUrl, destination] = vi.mocked(downloadWithCurl).mock.calls[0] as [string, string];
+    expect(downloadedUrl).toBe(
+      'https://github.com/HaxeFoundation/haxe/releases/download/4.3.7/haxe-4.3.7-linux64.tar.gz',
+    );
+    expect(path.isAbsolute(destination)).toBe(true);
+    expect(path.dirname(destination)).toBe('/runner/temp');
+  });
+
+  it('extracts the file curl wrote', async () => {
+    const asset = new HaxeAsset('4.3.7', false);
+    await (asset as unknown as { download: () => Promise<string> }).download();
+
+    const [, destination] = vi.mocked(downloadWithCurl).mock.calls[0] as [string, string];
+    const [extractedFile] = vi.mocked(tc.extractTar).mock.calls[0] as [string, string];
+    expect(extractedFile).toBe(destination);
+  });
+
+  it('does not extract anything when curl fails', async () => {
+    vi.mocked(downloadWithCurl).mockRejectedValueOnce(new Error('download failed'));
+
+    const asset = new HaxeAsset('4.3.7', false);
+    await expect((asset as unknown as { download: () => Promise<string> }).download()).rejects.toThrow(
+      'download failed',
+    );
+
+    expect(tc.extractTar).not.toHaveBeenCalled();
+    expect(tc.extractZip).not.toHaveBeenCalled();
+    expect(exec).not.toHaveBeenCalled();
   });
 });
