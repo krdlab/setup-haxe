@@ -4046,12 +4046,10 @@ async function downloadWithCurl(url, dest) {
 
 
 function resolveTarget(input) {
-    const { tool, platform, arch } = input;
+    let { tool, platform, arch } = input;
     if (platform === 'win32' && arch === 'arm64') {
-        return {
-            kind: 'unsupported',
-            reason: 'Windows ARM64 is not supported (no upstream Haxe/Neko archives).',
-        };
+        lib_core.info('Windows ARM64 has no upstream Haxe/Neko archives, falling back to x86_64 emulation.');
+        arch = 'x64';
     }
     if (platform !== 'darwin' && platform !== 'linux' && platform !== 'win32') {
         return { kind: 'unsupported', reason: `${platform} is not supported.` };
