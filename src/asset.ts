@@ -31,6 +31,14 @@ interface ResolveInput {
   nightly: boolean;
 }
 
+function unsupportedArch(arch: string): Resolution {
+  return { kind: 'unsupported', reason: `${arch} is not supported.` };
+}
+
+function requireArch<T extends string>(arch: string, allowedArchs: readonly T[]): arch is T {
+  return allowedArchs.includes(arch as T);
+}
+
 export function resolveTarget(input: ResolveInput): Resolution {
   const { tool, platform, arch } = input;
 
@@ -38,23 +46,27 @@ export function resolveTarget(input: ResolveInput): Resolution {
     return { kind: 'unsupported', reason: `${platform} is not supported.` };
   }
 
-  if (arch !== 'x64' && arch !== 'arm64' && arch !== 'ia32') {
-    return { kind: 'unsupported', reason: `${arch} is not supported.` };
+  if (tool === 'haxe') {
+    if (!requireArch(arch, ['x64', 'arm64'])) {
+      return unsupportedArch(arch);
+    }
+    return resolveHaxe({ platform, arch, nightly: input.nightly });
+  } else {
+    if (!requireArch(arch, ['x64', 'arm64', 'ia32'])) {
+      return unsupportedArch(arch);
+    }
+    return resolveNeko({
+      version: input.version,
+      platform,
+      arch,
+      nightly: input.nightly,
+    });
   }
-
-  return tool === 'haxe'
-    ? resolveHaxe({ platform, arch, nightly: input.nightly })
-    : resolveNeko({
-        version: input.version,
-        platform,
-        arch,
-        nightly: input.nightly,
-      });
 }
 
 function resolveHaxe(input: {
   platform: 'darwin' | 'linux' | 'win32';
-  arch: 'ia32' | 'x64' | 'arm64';
+  arch: 'x64' | 'arm64';
   nightly: boolean;
 }): Resolution {
   const { platform, arch, nightly } = input;
@@ -94,10 +106,6 @@ function resolveHaxe(input: {
     }
 
     case 'win32': {
-      if (arch === 'ia32') {
-        return { kind: 'stable', cachePlatform: 'win', archiveTarget: 'win' };
-      }
-
       return { kind: 'stable', cachePlatform: 'win64', archiveTarget: 'win64' };
     }
   }
@@ -352,9 +360,7 @@ export class HaxeAsset extends Asset {
     version: string,
     protected readonly nightly: boolean,
   ) {
-    const forceArch =
-      version.startsWith('3.') && os.platform() === 'win32' ? 'ia32' : isWindowsArm() ? 'x64' : undefined;
-    super('haxe', version, forceArch);
+    super('haxe', version, isWindowsArm() ? 'x64' : undefined);
   }
 
   get cachePlatform() {

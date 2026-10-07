@@ -4045,22 +4045,34 @@ async function downloadWithCurl(url, dest) {
 
 
 
+function unsupportedArch(arch) {
+    return { kind: 'unsupported', reason: `${arch} is not supported.` };
+}
+function requireArch(arch, allowedArchs) {
+    return allowedArchs.includes(arch);
+}
 function resolveTarget(input) {
     const { tool, platform, arch } = input;
     if (platform !== 'darwin' && platform !== 'linux' && platform !== 'win32') {
         return { kind: 'unsupported', reason: `${platform} is not supported.` };
     }
-    if (arch !== 'x64' && arch !== 'arm64' && arch !== 'ia32') {
-        return { kind: 'unsupported', reason: `${arch} is not supported.` };
+    if (tool === 'haxe') {
+        if (!requireArch(arch, ['x64', 'arm64'])) {
+            return unsupportedArch(arch);
+        }
+        return resolveHaxe({ platform, arch, nightly: input.nightly });
     }
-    return tool === 'haxe'
-        ? resolveHaxe({ platform, arch, nightly: input.nightly })
-        : resolveNeko({
+    else {
+        if (!requireArch(arch, ['x64', 'arm64', 'ia32'])) {
+            return unsupportedArch(arch);
+        }
+        return resolveNeko({
             version: input.version,
             platform,
             arch,
             nightly: input.nightly,
         });
+    }
 }
 function resolveHaxe(input) {
     const { platform, arch, nightly } = input;
@@ -4093,9 +4105,6 @@ function resolveHaxe(input) {
             return { kind: 'stable', cachePlatform: 'linux64', archiveTarget: 'linux64' };
         }
         case 'win32': {
-            if (arch === 'ia32') {
-                return { kind: 'stable', cachePlatform: 'win', archiveTarget: 'win' };
-            }
             return { kind: 'stable', cachePlatform: 'win64', archiveTarget: 'win64' };
         }
     }
@@ -4292,8 +4301,7 @@ class NekoAsset extends Asset {
 class HaxeAsset extends Asset {
     nightly;
     constructor(version, nightly) {
-        const forceArch = version.startsWith('3.') && external_node_os_namespaceObject.platform() === 'win32' ? 'ia32' : isWindowsArm() ? 'x64' : undefined;
-        super('haxe', version, forceArch);
+        super('haxe', version, isWindowsArm() ? 'x64' : undefined);
         this.nightly = nightly;
     }
     get cachePlatform() {
