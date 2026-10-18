@@ -60,6 +60,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
           - windows-latest
+          - windows-11-arm
         haxe:
           - latest
           - 4.3.7

@@ -12,12 +12,13 @@ This action sets up a Haxe environment for use in your workflows.
 | `ubuntu-latest` (x64) | stable (e.g. `4.3.7`, `3.4.7`) / `latest` (nightly) |
 | `macos-latest` (Intel / Apple Silicon) | stable / `latest` |
 | `windows-latest` (x64) | stable / `latest` |
+| `windows-11-arm` (Windows 11 ARM64) | stable / `latest` (x86/x64 binaries under emulation) |
 | `ubuntu-24.04-arm` (Linux ARM64) | `latest` (nightly) only |
 
 Notes:
 
 - Linux ARM64 only works with `haxe-version: latest`. HaxeFoundation does not publish stable Haxe ARM64 archives, and Neko 2.3.x (used by Haxe 3.x / 4.0–4.2) has no ARM64 binary. Stable Haxe / Neko 2.3 on Linux ARM64 will fail with an explicit error.
-- Windows ARM64 is not supported (no upstream Haxe / Neko archives).
+- Windows ARM64 uses the x86/x64 binaries under emulation, since no upstream Haxe / Neko archives for Windows ARM64 exist.
 
 ## Usage
 
