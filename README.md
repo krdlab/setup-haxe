@@ -18,6 +18,7 @@ This action sets up a Haxe environment for use in your workflows.
 Notes:
 
 - Linux ARM64 only works with `haxe-version: latest`. HaxeFoundation does not publish stable Haxe ARM64 archives, and Neko 2.3.x (used by Haxe 3.x / 4.0–4.2) has no ARM64 binary. Stable Haxe / Neko 2.3 on Linux ARM64 will fail with an explicit error.
+- The Windows archives for Haxe 3 had a 32-bit Haxelib binary, so they are installed with 32-bit Neko for compatibility.
 - Windows ARM64 uses the x86/x64 binaries under emulation, since no upstream Haxe / Neko archives for Windows ARM64 exist.
 
 ## Usage

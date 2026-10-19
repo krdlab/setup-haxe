@@ -76,9 +76,9 @@ describe('HaxeAsset (stable)', () => {
     ['darwin', 'x64', '4.3.7', 'haxe-4.3.7-osx.tar.gz', 'haxe-4.3.7-osx'],
     ['darwin', 'arm64', '4.3.7', 'haxe-4.3.7-osx.tar.gz', 'haxe-4.3.7-osx'],
     ['win32', 'x64', '4.3.7', 'haxe-4.3.7-win64.zip', 'haxe-4.3.7-win64'],
-    ['win32', 'x64', '3.4.7', 'haxe-3.4.7-win.zip', 'haxe-3.4.7-win'],
+    ['win32', 'x64', '3.4.7', 'haxe-3.4.7-win64.zip', 'haxe-3.4.7-win64'],
     ['win32', 'arm64', '4.3.7', 'haxe-4.3.7-win64.zip', 'haxe-4.3.7-win64'],
-    ['win32', 'arm64', '3.4.7', 'haxe-3.4.7-win.zip', 'haxe-3.4.7-win'],
+    ['win32', 'arm64', '3.4.7', 'haxe-3.4.7-win64.zip', 'haxe-3.4.7-win64'],
   ] as const)('%s/%s + %s', (platform, arch, version, fileName, basename) => {
     setOs(platform, arch);
     const asset = new TestableHaxe(version, false);
@@ -239,7 +239,7 @@ describe('resolveTarget cachePlatform (haxelib cache key compatibility)', () => 
     ['haxe', '4.3.7', 'darwin', 'x64', false, 'osx'],
     ['haxe', '4.3.7', 'darwin', 'arm64', false, 'osx'],
     ['haxe', '4.3.7', 'win32', 'x64', false, 'win64'],
-    ['haxe', '3.4.7', 'win32', 'ia32', false, 'win'],
+    ['haxe', '3.4.7', 'win32', 'x64', false, 'win64'],
     ['haxe', 'latest', 'linux', 'x64', true, 'linux64'],
     ['haxe', 'latest', 'darwin', 'arm64', true, 'osx'],
     ['haxe', 'latest', 'linux', 'arm64', true, 'linux-arm64'],
