@@ -4254,7 +4254,7 @@ class NekoAsset extends Asset {
             return new NekoAsset('latest', true, forceArch);
         }
         // NOTE: Haxe older than 4.3 has known issues with mbedtls 3 in Neko 2.4.
-        const nekoVer = version.startsWith('3.') || (version.startsWith('4.') && version < '4.3.') ? '2.3.0' : '2.4.0';
+        const nekoVer = version.startsWith('3.') || (version.startsWith('4.') && version < '4.3.') ? '2.3.0' : '2.4.1';
         return new NekoAsset(nekoVer, false, forceArch);
     }
     constructor(version, nightly, forceArch) {
