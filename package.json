@@ -24,9 +24,9 @@
   ],
   "dependencies": {
     "@actions/cache": "^6.0.0",
-    "@actions/core": "^1.9.1",
-    "@actions/exec": "^1.0.3",
-    "@actions/glob": "^0.4.0",
+    "@actions/core": "^3.0.1",
+    "@actions/exec": "^3.0.0",
+    "@actions/glob": "^0.6.1",
     "@actions/tool-cache": "^4.0.0",
     "semver": "^7.5.2"
   },
