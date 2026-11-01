@@ -353,7 +353,11 @@ export class HaxeAsset extends Asset {
     protected readonly nightly: boolean,
   ) {
     const forceArch =
-      version.startsWith('3.') && os.platform() === 'win32' ? 'ia32' : isWindowsArm() ? 'x64' : undefined;
+      version.startsWith('3.') && version < '3.4.4' && os.platform() === 'win32'
+        ? 'ia32'
+        : isWindowsArm()
+          ? 'x64'
+          : undefined;
     super('haxe', version, forceArch);
   }
 

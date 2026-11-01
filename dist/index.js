@@ -4292,7 +4292,11 @@ class NekoAsset extends Asset {
 class HaxeAsset extends Asset {
     nightly;
     constructor(version, nightly) {
-        const forceArch = version.startsWith('3.') && external_node_os_namespaceObject.platform() === 'win32' ? 'ia32' : isWindowsArm() ? 'x64' : undefined;
+        const forceArch = version.startsWith('3.') && version < '3.4.4' && external_node_os_namespaceObject.platform() === 'win32'
+            ? 'ia32'
+            : isWindowsArm()
+                ? 'x64'
+                : undefined;
         super('haxe', version, forceArch);
         this.nightly = nightly;
     }
